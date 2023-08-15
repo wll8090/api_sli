@@ -10,3 +10,4 @@ json_teste.py
 shelve_teste.py
 teste.py
 
+*.spec
