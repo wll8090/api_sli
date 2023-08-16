@@ -19,8 +19,6 @@ grupos=conf.get('DN_grupos')
 
 
 
-
-
 def valid(dd):
     return f'{dd}'.replace("[]",'')
 
