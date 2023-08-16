@@ -15,6 +15,9 @@ base=conf.get('app_api').get('BASE')
 tokem=conf.get('testes').get('FAKE_TOKEM')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
 shell=conf.get('testes').get('SHELL')
+grupos=conf.get('DN_grupos')
+
+
 
 
 
@@ -51,7 +54,7 @@ class user_ldap:
     def my_dados(self):
         self.conn.search(f'{base}',
                         f'(&(objectclass=user)(sAMAccountName={self.user}))' ,
-                        attributes=['cn','sAMAccountName','distinguishedName','memberof','mail','givenname'],
+                        attributes=['cn','sAMAccountName','distinguishedName','memberof','mail','givenname','info'],
                         search_scope=SUBTREE)
         i=self.conn.entries[0]
         self.all_dados={'user':valid(f'{i.cn}'),
@@ -62,13 +65,14 @@ class user_ldap:
                 'mail': valid(f'{i.sAMAccountName}')+dominio,
                 'givenname': valid(f'{i.givenname}'),
                 'token':self.userID,
-                'DN': f'{i.distinguishedName}'
+                'DN': f'{i.distinguishedName}',
+                'info':f'{i.info}'
                 }
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20):
         text=f'(&(objectclass=user)(cn={nome}*))'
-        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof','distinguishedName']
+        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof','distinguishedName','info']
         self.conn.search(base, text ,attributes=ll)
         dados={}
         cont=1
@@ -85,7 +89,8 @@ class user_ldap:
                 'telephonenumber': f'{i.telephonenumber}'.replace("[]",''),
                 'mail': f'{i.mail}'.replace("[]",''),
                 'givenname': f'{i.givenname}'.replace("[]",''),
-                'DN': f'{i.distinguishedName}'
+                'DN': f'{i.distinguishedName}',
+                'info':f'{i.info}'
                 })
         return dados
     
@@ -95,8 +100,8 @@ class user_ldap:
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
-        login1=f'{fn}.{l_nome[-1]}'
-        login2=f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'
+        login1=f'{fn}.{l_nome[-1]}'.lower()
+        login2=f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'.lower()
 
         DN=f"CN={nome},CN=Users,{base}"
         attr={
@@ -110,7 +115,9 @@ class user_ldap:
             'description':dados["desc"],
             'mail':dados.get('email2'),
             'userPrincipalName':f'{login1}@ufnt.local',
-            'userAccountControl':'66080' }
+            'userAccountControl':'66080',
+            'info':f"criador: {self.all_dados['DN']}"
+             }
         r=self.conn.add(DN,attributes=attr)
         c=login1
         b='usuario criado'
@@ -136,6 +143,9 @@ class user_ldap:
                 r=False
         if self.conn.result['result']==68:
             b='Usuario ja existe'
+        GP=grupos.get(cargo)
+        print(GP)
+        self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
         response={'response':r,'mensg':b,'login':c}
         return response
     
@@ -150,7 +160,7 @@ class user_ldap:
 
     def consulta_group(self,letra,quant_pag=20,membros=0):
         text=f'(&(objectclass=group)(cn={letra}*))'
-        ll=['cn','distinguishedName','desktopProfile']
+        ll=['cn','distinguishedName','desktopProfile','description','info']
         dados={}
         cont=1
         if membros:ll.append('member')
@@ -164,7 +174,9 @@ class user_ldap:
             ugp=valid(f'{i.desktopProfile}')
             dici={  'cn':valid(f'{i.cn}'),
                     'DN':f'{i.distinguishedName}',
-                    'UGP':ugp.split()[-1] if ugp else ''}
+                    'desc': f'{i.description}',
+                    'info':f'{i.info}'
+                    }
             if membros:
                 dici['membros']=[j.split(',')[0].split('=')[1] for j in i.member]
             pag.append(dici)
@@ -172,14 +184,13 @@ class user_ldap:
 
     def creat_group(self, dados):
         nome=dados['nome']
-        UGP=dados['UGP']
         dn=f'CN={nome},CN=users,{base}'
-        desc='grupo de teste LDAP3'
+        desc=dados['desc']
         group={
             'objectclass':['top','group'],
             'cn':nome,
             'description':desc,
-            'desktopProfile':f'UGP {UGP}',
+            'info':f"criador: {self.all_dados['DN']}"
             }
         r=self.conn.add(dn,attributes=group)
         return r

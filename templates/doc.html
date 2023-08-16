@@ -127,7 +127,7 @@ li {
                     Meth:'GET'  ( get -> keys) {'chr':str , 'pag':int ,'qp':int}<br>
                     Out:'json'  ->  {'atual_pg':int , 'total_pg':int , 'users':list*}  
                     <br>-> list* -> [dict*] 
-                    <br>-> dict* -> {"cn":str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telephonenumber':str-> telefone}
+                    <br>-> dict* -> {"cn":str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telephonenumber':str-> telefone ,'info':str -> criador}
                 </div>
                 <div class="resp">
                     Rota para buscar usuarios <br>
@@ -143,7 +143,7 @@ li {
 
             <li> <span class="rota">/$chave/$user/adduser</span>
                 <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'nome':str , 'pwd':str , 'email2':str , 'desc':str}<br>
+                    Meth:'POST'  ( raw -> keys) {'nome':str , 'pwd':str , 'email2':str , 'desc':str , 'cargo':str -> aluno | servidor}<br>
                     Out:'json'  ->  {'response':bool , 'login':str , 'mensg':str}  
                 </div>
                 <div class="resp">
@@ -175,7 +175,7 @@ li {
                     Meth:'GET'  ( get -> keys) {'chr':str , 'pag':int ,'qp':int , 'membros':int}<br>
                     Out:'json'  ->  {'atual_pg':int , 'total_pg':int , 'groups':list*}  
                     <br>-> list* -> [dict*] 
-                    <br>-> doct* -> {"DN":str , "UGP":str , "cn":str , "membros":list**}
+                    <br>-> doct* -> {"DN":str , "UGP":str , "cn":str , "membros":list** , 'info':str -> criador}
                     <br>-> list** -> [str]
                 </div>
                 <div class="resp">
@@ -194,13 +194,12 @@ li {
 
             <li> <span class="rota">/$chave/$user/add_group</span>
                 <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'nome':str,'UGP':str -> '0 1 2 3' }<br>
+                    Meth:'POST'  ( raw -> keys) {'nome':str , 'desc':str}<br>
                     Out:'json'  ->  {'response':bool}  
                 </div>
                 <div class="resp">
                     Rota para adicionar grupos.<br>
-                    UGP * User , Group , Password <br>
-                    0 1 2 3 * None , Ver , Editar , Criar 
+                    dec -> para descrição do grupo
                 </div>
             </li>
 
