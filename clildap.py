@@ -87,8 +87,8 @@ class user_ldap:
                 })
         return dados
     
-    def adduser(self,dados):
-        nome=dados['nome']      # dados
+    def adduser(self,dados:dict) ->dict :  #adiciona usuario  
+        nome=dados['nome']      # dados é um json
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
