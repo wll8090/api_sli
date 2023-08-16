@@ -15,6 +15,9 @@ base=conf.get('app_api').get('BASE')
 tokem=conf.get('testes').get('FAKE_TOKEM')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
 shell=conf.get('testes').get('SHELL')
+grupos=conf.get('DN_grupos')
+
+
 
 
 def valid(dd):
@@ -89,6 +92,7 @@ class user_ldap:
     
     def adduser(self,dados:dict) ->dict :  #adiciona usuario  
         nome=dados['nome']      # dados é um json
+        cargo=dados.get('cargo')
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
@@ -133,6 +137,9 @@ class user_ldap:
                 r=False
         if self.conn.result['result']==68:
             b='Usuario ja existe'
+        GP=grupos.get(cargo)
+        print(GP)
+        self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
         response={'response':r,'mensg':b,'login':c}
         return response
     
