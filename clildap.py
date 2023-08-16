@@ -21,6 +21,7 @@ shell=conf.get('testes').get('SHELL')
 def valid(dd):
     return f'{dd}'.replace("[]",'')
 
+
 class user_ldap:
     def __init__(self,user,pwd):
         self.user=user
@@ -135,9 +136,6 @@ class user_ldap:
                 r=False
         if self.conn.result['result']==68:
             b='Usuario ja existe'
-        GP=grupos.get(cargo)
-        print(GP)
-        self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
         response={'response':r,'mensg':b,'login':c}
         return response
     
@@ -215,7 +213,6 @@ class user_ldap:
         if shell:
             a=sub.run(command,shell=1,capture_output=1,text=1).stdout
             a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            print(a)
             pass
         if a=='':
             return {'response':False , 'mensg':'nova senha invalida'}
@@ -226,12 +223,11 @@ class user_ldap:
         new_pwd=dados.get("new_pwd")
         command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
         a='passa sem shell'
-        print(command)
         if shell:
-            a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            a=sub.run(command,shell=1,capture_output=1,text=1).stdout
+            a=sub.run(command,shell=1,capture_output=1,text=1)
+            a=sub.run(command,shell=1,capture_output=1,text=1)
             pass
-        if a=='':
+        if a.stdout=='':
             return {'response':False , 'mensg':'nova senha invalida'}
         return {'response':True , 'mensg':'ok'}
         
