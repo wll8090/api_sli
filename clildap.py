@@ -218,26 +218,24 @@ class user_ldap:
         if not con.bind(): 
             return {'response':False , 'mensg':'senha antiga invalida'}
         command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
-        a='passa sem shell'
         if shell:
             a=sub.run(command,shell=1,capture_output=1,text=1).stdout
             a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            pass
-        if a=='':
-            return {'response':False , 'mensg':'nova senha invalida'}
+            if a=='':
+                return {'response':False , 'mensg':'nova senha invalida'}
         return {'response':True , 'mensg':'ok'}
 
     def user_senha(self,dados):
         DN=dados.get('DN')
         new_pwd=dados.get("new_pwd")
+        if DN==self.all_dados['DN']:
+            return {'response':False , 'mensg':'erro de user.DN'}
         command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
-        a='passa sem shell'
         if shell:
             a=sub.run(command,shell=1,capture_output=1,text=1)
             a=sub.run(command,shell=1,capture_output=1,text=1)
-            pass
-        if a.stdout=='':
-            return {'response':False , 'mensg':'nova senha invalida'}
+            if a.stdout == '':
+                return {'response':False , 'mensg':'nova senha invalida'}
         return {'response':True , 'mensg':'ok'}
         
         
