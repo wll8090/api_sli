@@ -18,8 +18,6 @@ shell=conf.get('testes').get('SHELL')
 grupos=conf.get('DN_grupos')
 
 
-
-
 def valid(dd):
     return f'{dd}'.replace("[]",'')
 
@@ -184,12 +182,11 @@ class user_ldap:
         nome=dados['nome']
         dn=f'CN={nome},CN=users,{base}'
         desc=dados['desc']
-        group={
-            'objectclass':['top','group'],
-            'cn':nome,
-            'description':desc,
-            'info':f"criador: {self.all_dados['DN']}"
-            }
+        group={ 'objectclass':['top','group'],
+                'cn':nome,
+                'description':desc,
+                'info':f"criador: {self.all_dados['DN']}"
+                }
         r=self.conn.add(dn,attributes=group)
         return r
     
