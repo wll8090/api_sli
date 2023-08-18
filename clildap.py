@@ -226,7 +226,6 @@ class user_ldap:
         return {'response':True , 'mensg':'ok'}
 
     def user_senha(self,dados):
-        
         DN=dados.get('DN')
         new_pwd=dados.get("new_pwd")
         if DN==self.all_dados['DN']:
