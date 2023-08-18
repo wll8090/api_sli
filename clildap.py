@@ -61,7 +61,6 @@ class user_ldap:
                 'sAMAccountName': valid(f'{i.sAMAccountName}'),
                 'mail2': valid(f'{i.mail}'),
                 'mail': valid(f'{i.sAMAccountName}')+dominio,
-                'givenname': valid(f'{i.givenname}'),
                 'token':self.userID,
                 'DN': f'{i.distinguishedName}',
                 'info':f'{i.info}'
@@ -70,7 +69,8 @@ class user_ldap:
     
     def consulta(self,nome,quant_pag=20):
         text=f'(&(objectclass=user)(cn={nome}*))'
-        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof','distinguishedName','info']
+        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof',
+            'distinguishedName','info','sAMAccountName','userAccountControl']
         self.conn.search(base, text ,attributes=ll)
         dados={}
         cont=1
@@ -88,13 +88,14 @@ class user_ldap:
                 'mail': f'{i.mail}'.replace("[]",''),
                 'givenname': f'{i.givenname}'.replace("[]",''),
                 'DN': f'{i.distinguishedName}',
-                'info':f'{i.info}'
+                'info':f'{i.info}',
+                'login':f'{i.sAMAccountName}',
+                'estado':i.userAccountControl.value & 2 != 2
                 })
         return dados
     
     def adduser(self,dados:dict) ->dict :  #adiciona usuario  
-        nome=dados['nome']      # dados é um json
-        cargo=dados.get('cargo')
+        nome=dados['nome']                  # dados é um json
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
@@ -116,6 +117,14 @@ class user_ldap:
             'userAccountControl':'66080',
             'info':f"criador: {self.all_dados['DN']}"
              }
+        add_aluno =grupos.get("add_aluno") 
+        add_servidor =grupos.get("add_servidor") 
+        if add_aluno in self.all_dados['memberof']:
+            GP=grupos.get('aluno')
+        elif add_servidor in self.all_dados['memberof']:
+            GP=grupos.get('servidor')
+        else:
+            return {'response':False,'mensg':'sem autorização','login':'None'}
         r=self.conn.add(DN,attributes=attr)
         c=login1
         b='usuario criado'
@@ -132,7 +141,6 @@ class user_ldap:
         if r:
             command=f'dsmod user "{DN}" -pwd "{dados["pwd"]}" -mustchpwd no'
             a='passa sem shell'
-
             if shell:
                 a=sub.run(command,shell=1,capture_output=1,text=1).stdout
             if a=='':
@@ -141,8 +149,6 @@ class user_ldap:
                 r=False
         if self.conn.result['result']==68:
             b='Usuario ja existe'
-        GP=grupos.get(cargo)
-        print(GP)
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
         response={'response':r,'mensg':b,'login':c}
         return response
@@ -184,12 +190,11 @@ class user_ldap:
         nome=dados['nome']
         dn=f'CN={nome},CN=users,{base}'
         desc=dados['desc']
-        group={
-            'objectclass':['top','group'],
-            'cn':nome,
-            'description':desc,
-            'info':f"criador: {self.all_dados['DN']}"
-            }
+        group={ 'objectclass':['top','group'],
+                'cn':nome,
+                'description':desc,
+                'info':f"criador: {self.all_dados['DN']}"
+                }
         r=self.conn.add(dn,attributes=group)
         return r
     
