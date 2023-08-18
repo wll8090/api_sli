@@ -92,7 +92,6 @@ class user_ldap:
     
     def adduser(self,dados:dict) ->dict :  #adiciona usuario  
         nome=dados['nome']      # dados é um json
-        cargo=dados.get('cargo')
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
@@ -114,6 +113,14 @@ class user_ldap:
             'userAccountControl':'66080',
             'info':f"criador: {self.all_dados['DN']}"
              }
+        add_aluno =grupos.get("add_aluno") 
+        add_servidor =grupos.get("add_servidor") 
+        if add_aluno in self.all_dados['memberof']:
+            GP=grupos.get('aluno')
+        elif add_servidor in self.all_dados['memberof']:
+            GP=grupos.get('servidor')
+        else:
+            return {'response':False,'mensg':'sem autorização','login':'None'}
         r=self.conn.add(DN,attributes=attr)
         c=login1
         b='usuario criado'
@@ -130,7 +137,6 @@ class user_ldap:
         if r:
             command=f'dsmod user "{DN}" -pwd "{dados["pwd"]}" -mustchpwd no'
             a='passa sem shell'
-
             if shell:
                 a=sub.run(command,shell=1,capture_output=1,text=1).stdout
             if a=='':
@@ -139,8 +145,6 @@ class user_ldap:
                 r=False
         if self.conn.result['result']==68:
             b='Usuario ja existe'
-        GP=grupos.get(cargo)
-        print(GP)
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
         response={'response':r,'mensg':b,'login':c}
         return response
