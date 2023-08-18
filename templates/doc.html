@@ -84,7 +84,7 @@ li {
             <li> <span class="rota">/login/$chave</span>
                 <div class="req">
                     Meth:'GET' <br>
-                    Out:'json'  ->  {'GET':sha256-> $chave , 'singned':sha256-> $chave_assinada , 'dominio':str}
+                    Out:'json'  ->  {'GET':sha256-> $chave , 'singned':sha256-> $chave_assinada}
                 </div>
                 <div class="resp">
                     Fazendo um 'get', a saída é um json com a chave enviada a API 'GET' e a chave assinada 'singned'. <br>
@@ -127,7 +127,9 @@ li {
                     Meth:'GET'  ( get -> keys) {'chr':str , 'pag':int ,'qp':int}<br>
                     Out:'json'  ->  {'atual_pg':int , 'total_pg':int , 'users':list*}  
                     <br>-> list* -> [dict*] 
-                    <br>-> dict* -> {"cn":str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telephonenumber':str-> telefone ,'info':str -> criador , login:str}
+                    <br>-> dict* -> {"cn":str-> nome , 'givenname':str-> login , 'mail':str-> email ,
+                                     'memberof':list-> grupos , 'telephonenumber':str-> telefone ,'info':str -> criador , 
+                                     login:str , 'estado':bool -> ativado}
                 </div>
                 <div class="resp">
                     Rota para buscar usuarios <br>
