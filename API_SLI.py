@@ -16,6 +16,7 @@ with open('config.ini') as arq:
 port=conf.get('init').get('PORT')
 host=conf.get('init').get('HOST')
 ipCORS=conf.get('init').get('IPCORS')
+dominio=conf.get('app_api').get('DOMINIO')
 logs=conf.get('testes').get('LOGS')
 liberado=conf.get('testes').get('LIBERADO')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
@@ -229,7 +230,7 @@ def main():
         seg=assinado[-20:-10]
         if chave==cript:
             pages(app,seg)
-            return jsonify({'get':cript,'signed':assinado})
+            return jsonify({'get':cript,'signed':assinado,'dominio':dominio})
         elif chave=='000':
             if r[0] in app.view_functions:
                 deslog(app)

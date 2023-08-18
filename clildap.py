@@ -59,7 +59,6 @@ class user_ldap:
                 'sAMAccountName': valid(f'{i.sAMAccountName}'),
                 'mail2': valid(f'{i.mail}'),
                 'mail': valid(f'{i.sAMAccountName}')+dominio,
-                'givenname': valid(f'{i.givenname}'),
                 'token':self.userID,
                 'DN': f'{i.distinguishedName}',
                 'info':f'{i.info}'
@@ -68,7 +67,8 @@ class user_ldap:
     
     def consulta(self,nome,quant_pag=20):
         text=f'(&(objectclass=user)(cn={nome}*))'
-        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof','distinguishedName','info']
+        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof',
+            'distinguishedName','info','sAMAccountName','userAccountControl']
         self.conn.search(base, text ,attributes=ll)
         dados={}
         cont=1
@@ -86,12 +86,14 @@ class user_ldap:
                 'mail': f'{i.mail}'.replace("[]",''),
                 'givenname': f'{i.givenname}'.replace("[]",''),
                 'DN': f'{i.distinguishedName}',
-                'info':f'{i.info}'
+                'info':f'{i.info}',
+                'login':f'{i.sAMAccountName}',
+                'estado':i.userAccountControl.value & 2 != 2
                 })
         return dados
     
     def adduser(self,dados:dict) ->dict :  #adiciona usuario  
-        nome=dados['nome']      # dados é um json
+        nome=dados['nome']                  # dados é um json
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
