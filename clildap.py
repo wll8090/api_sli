@@ -93,51 +93,56 @@ class user_ldap:
                 'estado':i.userAccountControl.value & 2 != 2
                 })
         return dados
+
+    def validar_objeto(self,attr,valor):
+        filter=f'(&(objectClass=user)({attr}={valor}))'
+        attri=[attr]
+        self.conn.search(base,filter,attributes=attri)
+        return(bool(self.conn.entries))
     
     def adduser(self,dados:dict) ->dict :  #adiciona usuario  
         nome=dados['nome']                  # dados é um json
         l_nome=nome.split()
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
-        login1=f'{fn}.{l_nome[-1]}'.lower()
+        login1=login=f'{fn}.{l_nome[-1]}'.lower()
         login2=f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'.lower()
+
+        if self.validar_objeto('cn',nome):
+            return {'response':False,'mensg':'usuario ja existe','login':f'{login1}'}
+        if self.validar_objeto('sAMAccountName',login):
+            login=login2
+            if self.validar_objeto('sAMAccountName',login):
+                return {'response':False,'mensg':'login ja existe','login':f'{login1} & {login2}'}
 
         DN=f"CN={nome},CN=Users,{base}"
         attr={
             'objectclass':['top','person', 'organizationalPerson', 'user'],
             'cn':nome,
             'displayname':nome,
-            'uid':login1,
+            'uid':login,
             'givenName':l_nome[0],
             'sn':' '.join(l_nome[1:]),
-            'sAMAccountName':login1,
+            'sAMAccountName':login,
             'description':dados["desc"],
             'mail':dados.get('email2'),
-            'userPrincipalName':f'{login1}@ufnt.local',
+            'userPrincipalName':f'{login}@ufnt.local',
             'userAccountControl':'66080',
             'info':f"criador: {self.all_dados['DN']}"
              }
         add_aluno =grupos.get("add_aluno") 
         add_servidor =grupos.get("add_servidor") 
+
         if add_aluno in self.all_dados['memberof']:
             GP=grupos.get('aluno')
         elif add_servidor in self.all_dados['memberof']:
             GP=grupos.get('servidor')
         else:
             return {'response':False,'mensg':'sem autorização','login':'None'}
+        
         r=self.conn.add(DN,attributes=attr)
-        c=login1
+        c=login
         b='usuario criado'
-        if self.conn.result['result']==19:
-            c=login2
-            attr.update({'userPrincipalName':f'{login2}@ufnt.local',
-                        'uid':login2,
-                        'sAMAccountName':login2,
-                        })
-            r=self.conn.add(DN,attributes=attr)
-            if not r:
-                c=f'{login1} & {c}'
-                b='o login ja existe'
         if r:
             command=f'dsmod user "{DN}" -pwd "{dados["pwd"]}" -mustchpwd no'
             a='passa sem shell'
@@ -147,11 +152,9 @@ class user_ldap:
                 b='erro no formato da senha'
                 self.conn.delete(DN)
                 r=False
-        if self.conn.result['result']==68:
-            b='Usuario ja existe'
+
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
-        response={'response':r,'mensg':b,'login':c}
-        return response
+        return {'response':r,'mensg':b,'login':c}
     
     def rm_user(self,dados):
         DN=dados.get('DN')
