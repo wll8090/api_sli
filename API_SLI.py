@@ -202,9 +202,7 @@ def pages(app,seg):
         return abort(400)
 
 
-
 #################--------##################################
-
 
 def main():
     app=Flask(__name__)
@@ -219,7 +217,6 @@ def main():
     file_handler.setFormatter(log_formatter)
     app.logger.addHandler(file_handler)
     app.logger.setLevel(logging.ERROR)
-
 
 
     @app.route('/login/<chave>')      ## -->  loga na API
@@ -258,12 +255,9 @@ def main():
     @app.route('/doc')   ## --> documentação da API
     def doc():
         return render_template('doc.html')
-    
     app.run(host=host,port=port)
 
 
 ######### app   ----------------------  ######
-
-
 if __name__ == '__main__':
     main()

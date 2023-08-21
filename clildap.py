@@ -56,15 +56,14 @@ class user_ldap:
                         search_scope=SUBTREE)
         i=self.conn.entries[0]
         self.all_dados={'user':valid(f'{i.cn}'),
-                'givenname': valid(f'{i.givenname}'),
-                'memberof': valid(f'{i.memberof}'),
-                'sAMAccountName': valid(f'{i.sAMAccountName}'),
-                'mail2': valid(f'{i.mail}'),
-                'mail': valid(f'{i.sAMAccountName}')+dominio,
-                'token':self.userID,
-                'DN': f'{i.distinguishedName}',
-                'info':f'{i.info}'
-                }
+                        'givenname': valid(f'{i.givenname}'),
+                        'memberof': valid(f'{i.memberof}'),
+                        'sAMAccountName': valid(f'{i.sAMAccountName}'),
+                        'mail2': valid(f'{i.mail}'),
+                        'mail': valid(f'{i.sAMAccountName}')+dominio,
+                        'token':self.userID,
+                        'DN': f'{i.distinguishedName}',
+                        'info':f'{i.info}'}
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20):
@@ -80,18 +79,16 @@ class user_ldap:
                 dados.update({NL:[]})
                 pag=dados[NL]
                 cont+=1
-            pag.append({
-                'cn':f'{i.cn}'.replace("[]",''),
-                'givenname': f'{i.givenname}'.replace("[]",''),
-                'memberof': f'{i.memberof}'.replace("[]",''),
-                'telephonenumber': f'{i.telephonenumber}'.replace("[]",''),
-                'mail': f'{i.mail}'.replace("[]",''),
-                'givenname': f'{i.givenname}'.replace("[]",''),
-                'DN': f'{i.distinguishedName}',
-                'info':f'{i.info}',
-                'login':f'{i.sAMAccountName}',
-                'estado':i.userAccountControl.value & 2 != 2
-                })
+            pag.append({'cn':f'{i.cn}'.replace("[]",''),
+                        'givenname': f'{i.givenname}'.replace("[]",''),
+                        'memberof': f'{i.memberof}'.replace("[]",''),
+                        'telephonenumber': f'{i.telephonenumber}'.replace("[]",''),
+                        'mail': f'{i.mail}'.replace("[]",''),
+                        'givenname': f'{i.givenname}'.replace("[]",''),
+                        'DN': f'{i.distinguishedName}',
+                        'info':f'{i.info}',
+                        'login':f'{i.sAMAccountName}',
+                        'estado':i.userAccountControl.value & 2 != 2})
         return dados
 
     def validar_objeto(self,attr,valor):
@@ -100,7 +97,7 @@ class user_ldap:
         self.conn.search(base,filter,attributes=attri)
         return(bool(self.conn.entries))
     
-    def adduser(self,dados:dict) ->dict :  #adiciona usuario  
+    def adduser(self,dados:dict) ->dict :   #adiciona usuario  
         nome=dados['nome']                  # dados é um json
         l_nome=nome.split()
         fn=l_nome[0]
@@ -108,28 +105,26 @@ class user_ldap:
         login1=login=f'{fn}.{l_nome[-1]}'.lower()
         login2=f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'.lower()
 
-        if self.validar_objeto('cn',nome):
+        if self.validar_objeto('cn',nome):  #verificação de usuario
             return {'response':False,'mensg':'usuario ja existe','login':f'{login1}'}
-        if self.validar_objeto('sAMAccountName',login):
+        if self.validar_objeto('sAMAccountName',login):  #verificação de login1
             login=login2
-            if self.validar_objeto('sAMAccountName',login):
+            if self.validar_objeto('sAMAccountName',login): #verificação de login2
                 return {'response':False,'mensg':'login ja existe','login':f'{login1} & {login2}'}
 
         DN=f"CN={nome},CN=Users,{base}"
-        attr={
-            'objectclass':['top','person', 'organizationalPerson', 'user'],
-            'cn':nome,
-            'displayname':nome,
-            'uid':login,
-            'givenName':l_nome[0],
-            'sn':' '.join(l_nome[1:]),
-            'sAMAccountName':login,
-            'description':dados["desc"],
-            'mail':dados.get('email2'),
-            'userPrincipalName':f'{login}@ufnt.local',
-            'userAccountControl':'66080',
-            'info':f"criador: {self.all_dados['DN']}"
-             }
+        attr={  'objectclass':['top','person', 'organizationalPerson', 'user'],
+                'cn':nome,                                      #nome completo
+                'displayname':nome,                             #nome completo
+                'uid':login,                                    #idetificador unico
+                'givenName':l_nome[0],                          #primeiro nome
+                'sn':' '.join(l_nome[1:]),                      #sobre nome
+                'sAMAccountName':login,                         #login
+                'description':dados["desc"],                    #descrição da conta
+                'mail':dados.get('email2'),                     #email segundario
+                'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
+                'userAccountControl':'66080',                   #estado da conta
+                'info':f"criador: {self.all_dados['DN']}"}      #informação do criador
         add_aluno =grupos.get("add_aluno") 
         add_servidor =grupos.get("add_servidor") 
 
@@ -139,7 +134,6 @@ class user_ldap:
             GP=grupos.get('servidor')
         else:
             return {'response':False,'mensg':'sem autorização','login':'None'}
-        
         r=self.conn.add(DN,attributes=attr)
         c=login
         b='usuario criado'
@@ -152,7 +146,6 @@ class user_ldap:
                 b='erro no formato da senha'
                 self.conn.delete(DN)
                 r=False
-
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
         return {'response':r,'mensg':b,'login':c}
     
@@ -182,8 +175,7 @@ class user_ldap:
             dici={  'cn':valid(f'{i.cn}'),
                     'DN':f'{i.distinguishedName}',
                     'desc': f'{i.description}',
-                    'info':f'{i.info}'
-                    }
+                    'info':f'{i.info}'}
             if membros:
                 dici['membros']=[j.split(',')[0].split('=')[1] for j in i.member]
             pag.append(dici)
@@ -196,8 +188,7 @@ class user_ldap:
         group={ 'objectclass':['top','group'],
                 'cn':nome,
                 'description':desc,
-                'info':f"criador: {self.all_dados['DN']}"
-                }
+                'info':f"criador: {self.all_dados['DN']}"}
         r=self.conn.add(dn,attributes=group)
         return r
     
@@ -206,7 +197,6 @@ class user_ldap:
         group_dn=dados['DN_group']
         acao={  'add': MODIFY_ADD,
                 'remove': MODIFY_DELETE} [dados['modify']]
-        
         add={'member' : [(acao, [user_dn])]}
         self.conn.modify(group_dn, add)
         if self.conn.result['result']==0:
@@ -217,14 +207,8 @@ class user_ldap:
         DN=dados['DN']
         self.conn.delete(DN)
         return self.conn.result['result']==0
-
-    def troca_senha(self,dados):
-        pwd=dados['pwd']
-        new_pwd=dados['new_pwd']
-        DN=self.all_dados['DN']
-        con=Connection(self.server,self.logon,pwd)
-        if not con.bind(): 
-            return {'response':False , 'mensg':'senha antiga invalida'}
+    
+    def exec_pwd(slef, DN , new_pwd):
         command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
         if shell:
             a=sub.run(command,shell=1,capture_output=1,text=1).stdout
@@ -233,18 +217,19 @@ class user_ldap:
                 return {'response':False , 'mensg':'nova senha invalida'}
         return {'response':True , 'mensg':'ok'}
 
+    def troca_senha(self,dados):
+        pwd=dados['pwd']
+        new_pwd=dados['new_pwd']
+        DN=self.all_dados['DN']
+        con=Connection(self.server,self.logon,pwd)
+        if not con.bind(): 
+            return {'response':False , 'mensg':'senha antiga invalida'}
+        return self.exec_pwd(DN,new_pwd)
+
     def user_senha(self,dados):
         DN=dados.get('DN')
         new_pwd=dados.get("new_pwd")
         if DN==self.all_dados['DN']:
             return {'response':False , 'mensg':'erro de user.DN'}
-        command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
-        if shell:
-            a=sub.run(command,shell=1,capture_output=1,text=1)
-            a=sub.run(command,shell=1,capture_output=1,text=1)
-            if a.stdout == '':
-                return {'response':False , 'mensg':'nova senha invalida'}
-        return {'response':True , 'mensg':'ok'}
+        return self.exec_pwd(DN,new_pwd)
         
-        
-
