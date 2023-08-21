@@ -231,5 +231,4 @@ class user_ldap:
         new_pwd=dados.get("new_pwd")
         if DN==self.all_dados['DN']:
             return {'response':False , 'mensg':'erro de user.DN'}
-        return self.exec_pwd(DN,new_pwd)
-        
+        return self.exec_pwd(DN,new_pwd) ###salva 
