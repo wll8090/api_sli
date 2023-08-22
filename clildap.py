@@ -43,11 +43,11 @@ class user_ldap:
     def connetc(self):
         self.server=Server(host,get_info=ALL) 
         self.conn=Connection(self.server,self.logon,self.pwd)
-        return self.conn.bind()
+        return {'response':self.conn.bind()}
     
     def logout(self):
         self.conn.unbind()
-        return True
+        return {'response':True}
     
     def my_dados(self):
         self.conn.search(f'{base}',
@@ -154,9 +154,10 @@ class user_ldap:
         if DN==self.all_dados["DN"]:
             return None
         self.conn.delete(DN)
+        re=False
         if self.conn.result['result']==0:
-            return True
-        return False
+            re=True
+        return {'response':re}
 
     def consulta_group(self,letra,quant_pag=20,membros=0):
         text=f'(&(objectclass=group)(cn={letra}*))'
@@ -189,8 +190,8 @@ class user_ldap:
                 'cn':nome,
                 'description':desc,
                 'info':f"criador: {self.all_dados['DN']}"}
-        r=self.conn.add(dn,attributes=group)
-        return r
+        re=self.conn.add(dn,attributes=group)
+        return {'response':re}
     
     def modify_group(self,dados):
         user_dn=dados['DN_user']
@@ -199,14 +200,15 @@ class user_ldap:
                 'remove': MODIFY_DELETE} [dados['modify']]
         add={'member' : [(acao, [user_dn])]}
         self.conn.modify(group_dn, add)
+        re=False
         if self.conn.result['result']==0:
-            return True
-        return False
+            re=True
+        return {'response':re}
 
     def rm_group(self,dados):
         DN=dados['DN']
         self.conn.delete(DN)
-        return self.conn.result['result']==0
+        return {'response':self.conn.result['result']==0}
     
     def exec_pwd(slef, DN , new_pwd):
         command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
@@ -231,4 +233,4 @@ class user_ldap:
         new_pwd=dados.get("new_pwd")
         if DN==self.all_dados['DN']:
             return {'response':False , 'mensg':'erro de user.DN'}
-        return self.exec_pwd(DN,new_pwd) ###salva 
+        return self.exec_pwd(DN,new_pwd)

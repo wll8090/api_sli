@@ -20,56 +20,49 @@ logs=conf.get('testes').get('LOGS')
 liberado=conf.get('testes').get('LIBERADO')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
 
-
-erro404 = lambda: abort(404)
-r=['login','users','adduser','groups' ,'add_group', 'modify_group', 'delete_user', 'delete_group',
-    'reset_pwd', 'user_pwd',              'logout']
-
 ldap_usrs={}
+erro404 = lambda: abort(404)
+api_assinada=False
 
 ## erro de tokem ou login
 msgerro={'response':'Tokenize error & user login'}
 
-
-def rotas(seg):
-    s=f'/{seg}/<user>/'
-    for i in r[1:]:
-        yield s+i
-
-def deslog(app):
-    for i in r:
-        app.view_functions[i]=erro404
-    return None
-
-def limpar_rotas(app):
-    for i in r:
-        app.view_functions.pop(i)
-    return True
-
-
-def logon(user,pwd):
+def logon(dados):
     global ldap_usrs
+    user=dados['user']
+    pwd=dados['pwd']
     user_l=user_ldap(user,pwd)
     if user_l.connetc():
         ldap_usrs[user]=user_l
-        return user
-    else: return False 
+        return user_l.my_dados()
+    else: return {'resmpose':False} 
 
 
 def validar_tokem(func):
     @wraps(func)
-    def new_func(user):
+    def new_func(user,acao):
         tt=request.headers.get('Authorization')
         tokem=dict([tt.split(' ') if tt else ['a','b']])
         bearer=tokem.get('Bearer')
         if not val_tokem and user in ldap_usrs:   ##  <<--- passa tudo (tokem)
-            return func(user)
+            return func(user,acao)
         if user not in ldap_usrs or not bearer:
             return jsonify(msgerro)
         if ldap_usrs[user].userID==bearer:
-            return func(user)
+            return func(user,acao)
         return jsonify(msgerro)
     return new_func
+
+
+def validar_api(func):
+    @wraps(func)
+    def new_funtion(user='',acao=''):
+        if not api_assinada:
+            return erro404()
+        if user: return func(user,acao)
+        else: return func()
+    return new_funtion
+
 
 
 def assinar():
@@ -82,127 +75,84 @@ def assinar():
     assinado=sha256((cript_dia+assina).encode('utf8')).hexdigest()
     return cript_dia , assinado
 
+
+def users(user,args):
+    letra=args.get("chr")           #letra da requisição
+    n=args.get("pag")               #numero da pagina
+    quant_pag=args.get("qp")        #quantidade por pagina  *20
+    n=int(n) if n != None else 1
+    quant_pag=int(quant_pag) if quant_pag !=None else 20 
+    pg=f'users{n:0>3}'
+    req=ldap_usrs[user].consulta(letra,quant_pag)
+    dados={'users':req.get(pg),
+            'total_pg':len(req),
+            'atual_pg':n}
+    return dados
+
+def groups(user,args):
+    letra=args.get("chr")           #letra da requisição
+    n=args.get("pag")               #numero da pagina
+    quant_pag=args.get("qp")        #quantidade por pagina  *20
+    membros=args.get("membros")     #deve listar os membros *0
+    n=int(n) if n != None else 1
+    quant_pag =int(quant_pag) if quant_pag !=None else 20 
+    membros= int(membros) if membros !=None else 20
+    pg=f'group{n:0>3}'
+    req=ldap_usrs[user].consulta_group(letra,quant_pag,membros)
+    dados={'groups':req.get(pg),
+            'total_pg':len(req),
+            'atual_pg':n}
+    return dados
+
 #################### paginas com autenticação ###############
+def rotas_fechadas(app,seg):
+    if 'rotas_ocutas' in app.view_functions: return True
 
-def pages(app,seg):
-    if r[0] in app.view_functions:
-        limpar_rotas(app)
-    rr=rotas(seg)
-
-    @app.route(next(rr),methods=['get']) ##  /users   --> pesquisa por usuario
-    @validar_tokem
-    def users(user):
-        letra=request.args.get("chr")           #letra da requisição
-        n=request.args.get("pag")               #numero da pagina
-        quant_pag=request.args.get("qp")        #quantidade por pagina  *20
-        n=int(n) if n != None else 1
-        quant_pag=int(quant_pag) if quant_pag !=None else 20 
-        pg=f'users{n:0>3}'
-        req=ldap_usrs[user].consulta(letra,quant_pag)
-        dados={'users':req.get(pg),
-                'total_pg':len(req),
-                'atual_pg':n}
-        return jsonify(dados)
-
-
-    @app.route(next(rr),methods=['POST'])  ## /adduser   --> adiciona usuario
-    @validar_tokem
-    def adduser(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].adduser(dados)
-        if r:
-            return r
-        return jsonify({"response":"end_function"}) 
-
-    
-    @app.route(next(rr),methods=['GET'])  ## /groups   --> pesquisa grupos
-    @validar_tokem
-    def groups(user):
-        letra=request.args.get("chr")           #letra da requisição
-        n=request.args.get("pag")               #numero da pagina
-        quant_pag=request.args.get("qp")        #quantidade por pagina  *20
-        membros=request.args.get("membros")     #deve listar os membros *0
-        n=int(n) if n != None else 1
-        quant_pag =int(quant_pag) if quant_pag !=None else 20 
-        membros= int(membros) if membros !=None else 20
-        pg=f'group{n:0>3}'
-        req=ldap_usrs[user].consulta_group(letra,quant_pag,membros)
-        dados={'groups':req.get(pg),
-                'total_pg':len(req),
-                'atual_pg':n}
-        return jsonify(dados)
-
-
-    @app.route(next(rr),methods=['POST'])   ## /add_group  -->adiciona grupo
-    @validar_tokem
-    def add_group(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].creat_group(dados)
-        return jsonify({'response':[False,True][r]})
-
-
-    @app.route(next(rr),methods=['POST'])   ## /modify_group   --> adiciona e remove de grupo
-    @validar_tokem
-    def modify_group(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].modify_group(dados)
-        return jsonify({'response':r})
-    
-
-    @app.route(next(rr),methods=['POST'])   ## /delete_user   --> delete usuario
-    @validar_tokem
-    def delete_user(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].rm_user(dados)
-        return jsonify({'response':r})
-
-    
-    @app.route(next(rr),methods=['POST'])   ## /delete_goup   --> delete grupo
-    @validar_tokem
-    def delete_group(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].rm_group(dados)
-        return jsonify({'response':r})
-    
-
-    @app.route(next(rr),methods=['POST'])   ## /reset_pwd --> trocar senha do usuario    
-    @validar_tokem
-    def reset_pwd(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].troca_senha(dados)
-        return jsonify({'response':r})
-    
-
-    @app.route(next(rr),methods=['POST'])   ## /user_pwd --> trocar senha de outros usuario   
-    @validar_tokem
-    def user_pwd(user):
-        dados=json.loads(request.data)
-        r=ldap_usrs[user].user_senha(dados)
-        return jsonify({'response':r})
-
-
-    #--------------------- end ---------
-    @app.route(next(rr),methods=['GET'])   ## /logout     --> desloga user
-    @validar_tokem
-    def logout(user):
-        aa=ldap_usrs.pop(user)
-        aa.logout()
-        del(aa)
-        return f'{user} logout'
-
-
-    @app.route(f'/{seg}/{r[0]}',methods=['POST']) ## /login   --> loga usuario
+    @app.route(f'/{seg}/login/',methods=['post'])
+    @validar_api
     def login():
         dados=json.loads(request.data)
-        r_user=logon(**dados)
-        if r_user:
-            dd=ldap_usrs[r_user].my_dados()
-            ldap_usrs[r_user].log_login()
-            return jsonify(dd)
-        return abort(400)
+        re=logon(dados)
+        return jsonify(re)
 
 
-#################--------##################################
+    @app.route(f'/{seg}/<user>/<acao>/',methods=['GET','POST'])
+    @validar_api
+    @validar_tokem
+    def rotas_ocutas(user,acao):
+        re='nada'
+        if request.method == 'GET':   #todos os GETS
+            args=request.args
+            if acao == 'users':             #fas pesquisas de usuarios
+                re=users(user,args)
+            elif acao == 'groups':          #faz pesquisas de grupos
+                re=groups(user,args)
+            elif acao == 'logout':          #desloga o usuario
+                aa=ldap_usrs.pop(user)
+                aa.logout()
+                del(aa)
+                re={'response':True}
+
+        elif request.method=='POST':   #todos os POSTS
+            dados=json.loads(request.data)
+            if acao=='add_user':                        #adiniona novo usuario
+                re=ldap_usrs[user].adduser(dados)
+            elif acao == 'add_group':                   #adiciona novo grupo 
+                re=ldap_usrs[user].creat_group(dados)
+            elif acao == 'modify_group':                #modifica grupo adicionae remove usuarios
+                re=ldap_usrs[user].modify_group(dados)
+            elif acao == 'delete_user':                 #deleta usuario
+                re=ldap_usrs[user].rm_user(dados)
+            elif acao == 'delete_group':                #deleta grupos
+                re=ldap_usrs[user].rm_group(dados)
+            elif acao == 'reset_pwd':                   #troca senha do self.usuario
+                re=ldap_usrs[user].troca_senha(dados)
+            elif acao == 'user_pwd':                    #troca senha de outros usuarios
+                re=ldap_usrs[user].user_senha(dados)
+        if re=='nada': return erro404()
+        return jsonify(re)
+
+####################################################################
 
 def main():
     app=Flask(__name__)
@@ -221,21 +171,20 @@ def main():
 
     @app.route('/login/<chave>')      ## -->  loga na API
     def index(chave):
-        global assinado, seg, cript , ldap_usrs
+        global assinado, seg, cript , ldap_usrs, api_assinada
         cript,assinado=assinar()
         seg=assinado[-20:-10]
         if chave==cript:
-            pages(app,seg)
+            api_assinada=True
+            rotas_fechadas(app,seg)
             return jsonify({'get':cript,'signed':assinado})
         elif chave=='000':
-            if r[0] in app.view_functions:
-                deslog(app)
+            api_assinada=False
             ldap_usrs={}
-            return f'deslogin ok '
+            return jsonify({'response':'True','msg':'API logout'})
         else:
             return jsonify({'get':'None','signed':'None'})
-
-
+        
     if logs:
         @app.route('/log')
         def log():
@@ -248,15 +197,24 @@ def main():
             <hr> 
             ldap_users: {ldap_usrs}<hr>
             rotas: {app.view_functions} <hr>
-            {texte}
-            '''
-
+            {texte}'''
 
     @app.route('/doc')   ## --> documentação da API
     def doc():
         return render_template('doc.html')
     app.run(host=host,port=port)
 
+    @app.route(f'/{seg}/login',methods=['POST']) ## /login   --> loga usuario
+    def login():
+        if not api_assinada:
+            return erro404()
+        dados=json.loads(request.data)
+        r_user=logon(**dados)
+        if r_user:
+            dd=ldap_usrs[r_user].my_dados()
+            ldap_usrs[r_user].log_login()
+            return jsonify(dd)
+        return abort(400)
 
 ######### app   ----------------------  ######
 if __name__ == '__main__':
