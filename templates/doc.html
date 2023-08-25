@@ -143,7 +143,7 @@ li {
 
 
 
-            <li> <span class="rota">/$chave/$user/adduser</span>
+            <li> <span class="rota">/$chave/$user/add_user</span>
                 <div class="req">
                     Meth:'POST'  ( raw -> keys) {'nome':str , 'pwd':str , 'email2':str , 'desc':str}<br>
                     Out:'json'  ->  {'response':bool , 'login':str , 'mensg':str}  
@@ -161,7 +161,7 @@ li {
             <li> <span class="rota">/$chave/$user/delete_user</span>
                 <div class="req">
                     Meth:'POST'  ( raw -> keys) {'DN':str}<br>
-                    Out:'json'  ->  {'response':bool}  
+                    Out:'json'  ->  {'response':bool,'mensg':str}  
                 </div>
                 <div class="resp">
                     Rota para deletar usuario.<br>
@@ -197,7 +197,7 @@ li {
             <li> <span class="rota">/$chave/$user/add_group</span>
                 <div class="req">
                     Meth:'POST'  ( raw -> keys) {'nome':str , 'desc':str}<br>
-                    Out:'json'  ->  {'response':bool}  
+                    Out:'json'  ->  {'response':bool , 'mensg':str}  
                 </div>
                 <div class="resp">
                     Rota para adicionar grupos.<br>
@@ -210,7 +210,7 @@ li {
             <li> <span class="rota">/$chave/$user/modify_group</span>
                 <div class="req">
                     Meth:'POST'  ( raw -> keys) {'user':str , 'DN_group':str , 'modify': str -> 'add' | 'remove'}<br>
-                    Out:'json'  ->  {'response':bool}  
+                    Out:'json'  ->  {'response':bool , 'mensg':str}  
                 </div>
                 <div class="resp">
                     Rota para adicionar e remover membro de grupos.<br>
@@ -224,7 +224,7 @@ li {
             <li> <span class="rota">/$chave/$user/delete_group</span>
                 <div class="req">
                     Meth:'POST'  ( raw -> keys) {'DN':str }<br>
-                    Out:'json'  ->  {'response':bool}  
+                    Out:'json'  ->  {'response':bool , 'mensg':str}  
                 </div>
                 <div class="resp">
                     Rota para remover grupo.<br>

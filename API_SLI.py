@@ -1,10 +1,11 @@
-from flask import Flask ,abort, jsonify, request, make_response,render_template
-from hashlib import sha256
-from datetime import datetime
-from flask_cors import CORS
+from apscheduler.schedulers.background import BackgroundScheduler
 from clildap import user_ldap
 from datetime import datetime, timedelta
+from flask import Flask ,abort, jsonify, request, make_response,render_template
+from flask_cors import CORS
 from functools import wraps
+from hashlib import sha256
+from threading import Thread
 
 import json
 import logging
@@ -19,6 +20,9 @@ ipCORS=conf.get('init').get('IPCORS')
 logs=conf.get('testes').get('LOGS')
 liberado=conf.get('testes').get('LIBERADO')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
+flag=conf.get('init').get('FLAG')
+hora,minuto=[int(i) for i in conf.get('init').get('HORA').split(':')]
+
 
 ldap_usrs={}
 erro404 = lambda: abort(404)
@@ -67,7 +71,8 @@ def validar_api(func):
 
 def assinar():
     assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
-    dia=datetime.now().strftime("%d/%m-bolinha-%d/%m")
+    dia=datetime.now().strftime(f"%d/%m-{flag}-%d/%m")
+    print(dia)
     cript_dia=sha256(dia.encode('utf8')).hexdigest()
     if liberado:
         assina ='25/07-assinado-25/07'
@@ -103,6 +108,13 @@ def groups(user,args):
             'total_pg':len(req),
             'atual_pg':n}
     return dados
+
+def reset_api():
+    global api_assinada, ldap_usrs
+    api_assinada=False
+    ldap_usrs={}
+    print('reset_api')
+    return True
 
 #################### paginas com autenticação ###############
 def rotas_fechadas(app,seg):
@@ -204,18 +216,10 @@ def main():
         return render_template('doc.html')
     app.run(host=host,port=port)
 
-    @app.route(f'/{seg}/login',methods=['POST']) ## /login   --> loga usuario
-    def login():
-        if not api_assinada:
-            return erro404()
-        dados=json.loads(request.data)
-        r_user=logon(**dados)
-        if r_user:
-            dd=ldap_usrs[r_user].my_dados()
-            ldap_usrs[r_user].log_login()
-            return jsonify(dd)
-        return abort(400)
-
 ######### app   ----------------------  ######
 if __name__ == '__main__':
+    sched=BackgroundScheduler()
+    sched.add_job(reset_api, 'interval', minutes=2)
+    th01=Thread(target=sched.start,daemon=1)
+    th01.start()
     main()

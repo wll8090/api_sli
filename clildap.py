@@ -18,7 +18,6 @@ shell=conf.get('testes').get('SHELL')
 grupos=conf.get('DN_grupos')
 
 
-
 def valid(dd):
     return f'{dd}'.replace("[]",'')
 
@@ -155,9 +154,11 @@ class user_ldap:
             return None
         self.conn.delete(DN)
         re=False
+        msg='usuario não deletado'
         if self.conn.result['result']==0:
             re=True
-        return {'response':re}
+            msg='usuario deletado'
+        return {'response':re,'mensg':msg}
 
     def consulta_group(self,letra,quant_pag=20,membros=0):
         text=f'(&(objectclass=group)(cn={letra}*))'
@@ -184,6 +185,8 @@ class user_ldap:
 
     def creat_group(self, dados):
         nome=dados['nome']
+        if self.consulta_group(nome).get('group001'):
+            return {'response':False,'mensg':'grupo ja existe'}
         dn=f'CN={nome},CN=users,{base}'
         desc=dados['desc']
         group={ 'objectclass':['top','group'],
@@ -191,7 +194,7 @@ class user_ldap:
                 'description':desc,
                 'info':f"criador: {self.all_dados['DN']}"}
         re=self.conn.add(dn,attributes=group)
-        return {'response':re}
+        return {'response':re,'mensg':'add grupo'}
     
     def modify_group(self,dados):
         user_dn=dados['DN_user']
@@ -203,12 +206,17 @@ class user_ldap:
         re=False
         if self.conn.result['result']==0:
             re=True
-        return {'response':re}
+        return {'response':re,'mensg':dados['modify']}
 
     def rm_group(self,dados):
         DN=dados['DN']
         self.conn.delete(DN)
-        return {'response':self.conn.result['result']==0}
+        re=False
+        msg='grupo não deletado'
+        if self.conn.result['result']==0:
+            re=True
+            msg='grupo deletado'
+        return {'response':re,'mensg':msg}
     
     def exec_pwd(slef, DN , new_pwd):
         command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
