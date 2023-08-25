@@ -2,6 +2,7 @@ logs
 login
 build
 dist
+teste
 __pycache__
 
 api_icon.ico

@@ -39,32 +39,32 @@ def logon(dados):
     if user_l.connetc():
         ldap_usrs[user]=user_l
         return user_l.my_dados()
-    else: return {'resmpose':False} 
+    else: return {'resmpose':False,'mensg':'usuario ou senha incorreto'} 
 
 
 def validar_tokem(func):
     @wraps(func)
-    def new_func(user,acao):
+    def new_func(seg,user,acao):
         tt=request.headers.get('Authorization')
         tokem=dict([tt.split(' ') if tt else ['a','b']])
         bearer=tokem.get('Bearer')
         if not val_tokem and user in ldap_usrs:   ##  <<--- passa tudo (tokem)
-            return func(user,acao)
+            return func(seg,user,acao)
         if user not in ldap_usrs or not bearer:
             return jsonify(msgerro)
         if ldap_usrs[user].userID==bearer:
-            return func(user,acao)
+            return func(seg,user,acao)
         return jsonify(msgerro)
     return new_func
 
 
 def validar_api(func):
     @wraps(func)
-    def new_funtion(user='',acao=''):
-        if not api_assinada:
+    def new_funtion(rota_seg,user='',acao=''):
+        if not api_assinada or rota_seg != seg:
             return erro404()
-        if user: return func(user,acao)
-        else: return func()
+        if user: return func(rota_seg,user,acao)
+        else: return func(rota_seg)
     return new_funtion
 
 
@@ -72,7 +72,6 @@ def validar_api(func):
 def assinar():
     assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
     dia=datetime.now().strftime(f"%d/%m-{flag}-%d/%m")
-    print(dia)
     cript_dia=sha256(dia.encode('utf8')).hexdigest()
     if liberado:
         assina ='25/07-assinado-25/07'
@@ -113,25 +112,26 @@ def reset_api():
     global api_assinada, ldap_usrs
     api_assinada=False
     ldap_usrs={}
-    print('reset_api')
+    print(f'------- reset_api --> {hora}:{minuto}--------')
     return True
 
 #################### paginas com autenticação ###############
-def rotas_fechadas(app,seg):
-    if 'rotas_ocutas' in app.view_functions: return True
+def rotas_fechadas(app):
+    if 'rotas_ocutas' in app.view_functions: 
+        return True
 
-    @app.route(f'/{seg}/login/',methods=['post'])
+    @app.route(f'/<rota_seg>/login/',methods=['post'])
     @validar_api
-    def login():
+    def login(rota_seg):
         dados=json.loads(request.data)
         re=logon(dados)
         return jsonify(re)
 
 
-    @app.route(f'/{seg}/<user>/<acao>/',methods=['GET','POST'])
+    @app.route(f'/<rota_seg>/<user>/<acao>/',methods=['GET','POST'])
     @validar_api
     @validar_tokem
-    def rotas_ocutas(user,acao):
+    def rotas_ocutas(rota_seg,user,acao):
         re='nada'
         if request.method == 'GET':   #todos os GETS
             args=request.args
@@ -181,6 +181,8 @@ def main():
     app.logger.setLevel(logging.ERROR)
 
 
+    rotas_fechadas(app)
+
     @app.route('/login/<chave>')      ## -->  loga na API
     def index(chave):
         global assinado, seg, cript , ldap_usrs, api_assinada
@@ -188,14 +190,10 @@ def main():
         seg=assinado[-20:-10]
         if chave==cript:
             api_assinada=True
-            rotas_fechadas(app,seg)
             return jsonify({'get':cript,'signed':assinado})
-        elif chave=='000':
-            api_assinada=False
-            ldap_usrs={}
-            return jsonify({'response':'True','msg':'API logout'})
         else:
             return jsonify({'get':'None','signed':'None'})
+    
         
     if logs:
         @app.route('/log')
@@ -219,7 +217,7 @@ def main():
 ######### app   ----------------------  ######
 if __name__ == '__main__':
     sched=BackgroundScheduler()
-    sched.add_job(reset_api, 'interval', minutes=2)
+    sched.add_job(reset_api, 'cron',hour=hora, minute=minuto)
     th01=Thread(target=sched.start,daemon=1)
     th01.start()
     main()

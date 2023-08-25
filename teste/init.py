@@ -16,13 +16,13 @@ import requests
 
 login_app=True             #para testar o login na API
 login_logout_user=True     #para testar o login do user
-pesquisar_usuario=False     #para testar pesquisar por usuarios
-pesquisar_grupos=False      #para testar pesquisar por grupos
-add_rm_usuario=False        #para testar criar e pagar usuario
-add_rm_grupo=False          #para testar criar e apagar grupo
-senha_self=False            #para testar trocar senha do proprio usuario
-senha_users=False            #para testar trocar a senha de outros usuarios
-mecher_no_grupo=False       #para testar adicionar e remover usuarios de grupo
+pesquisar_usuario=True     #para testar pesquisar por usuarios
+pesquisar_grupos=True      #para testar pesquisar por grupos
+add_rm_usuario=True        #para testar criar e pagar usuario
+add_rm_grupo=True          #para testar criar e apagar grupo
+senha_self=True            #para testar trocar senha do proprio usuario
+senha_users=True            #para testar trocar a senha de outros usuarios
+mecher_no_grupo=True       #para testar adicionar e remover usuarios de grupo
 
 
 
@@ -48,7 +48,9 @@ def decora(msg):
     def new_func(func):
         def funcao(dados):
             print(f'\n**** Teste de: {msg} ****')
+            
             re,ree,dados =func(dados)
+            print(re)
             if  re:
                 print(f'OK:{ree}')
             else: 
@@ -70,6 +72,7 @@ def authenticar():
     assinado=sha256((cript_dia+assina).encode('utf8')).hexdigest()
     rota=assinado[-20:-10]
     dd= {'assinado':assinado, 'cripto_do_dia':cript_dia,'rota':rota}
+    print(dd)
     return dd
 
 
