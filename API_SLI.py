@@ -70,14 +70,15 @@ def validar_api(func):
 
 
 def assinar():
+    global cript,assinado
     assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
     dia=datetime.now().strftime(f"%d/%m-{flag}-%d/%m")
-    cript_dia=sha256(dia.encode('utf8')).hexdigest()
+    cript=sha256(dia.encode('utf8')).hexdigest()
     if liberado:
         assina ='25/07-assinado-25/07'
-        cript_dia='0f7b8c3893290e18eaec7c09d7d794d13a83b79ab68bc3a5c228650ee87ff85f'
-    assinado=sha256((cript_dia+assina).encode('utf8')).hexdigest()
-    return cript_dia , assinado
+        cript='0f7b8c3893290e18eaec7c09d7d794d13a83b79ab68bc3a5c228650ee87ff85f'
+    assinado=sha256((cript+assina).encode('utf8')).hexdigest()
+    return cript , assinado
 
 
 def users(user,args):
@@ -107,6 +108,7 @@ def groups(user,args):
             'total_pg':len(req),
             'atual_pg':n}
     return dados
+
 
 def reset_api():
     global api_assinada, ldap_usrs
@@ -161,6 +163,8 @@ def rotas_fechadas(app):
                 re=ldap_usrs[user].troca_senha(dados)
             elif acao == 'user_pwd':                    #troca senha de outros usuarios
                 re=ldap_usrs[user].user_senha(dados)
+            elif acao == 'alter_count':
+                re=ldap_usrs[user].modify_my_count(dados)
         if re=='nada': return erro404()
         return jsonify(re)
 
@@ -185,10 +189,10 @@ def main():
 
     @app.route('/login/<chave>')      ## -->  loga na API
     def index(chave):
-        global assinado, seg, cript , ldap_usrs, api_assinada
-        cript,assinado=assinar()
-        seg=assinado[-20:-10]
+        global seg, api_assinada
+        assinar()
         if chave==cript:
+            seg=assinado[-20:-10]
             api_assinada=True
             return jsonify({'get':cript,'signed':assinado})
         else:
@@ -198,7 +202,6 @@ def main():
     if logs:
         @app.route('/log')
         def log():
-            cript,assinado=assinar()
             seg=assinado[-20:-10]
             texte=open(f'logs/erro_{data}.log').read()
             return f'''get: {cript} <br>

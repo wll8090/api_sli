@@ -1,9 +1,11 @@
-from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE
+from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
 import subprocess as sub
 from hashlib import sha256
 from random import randint
 from json import loads
-from datetime import datetime 
+from datetime import datetime
+from random import randint
+from seed_email import enviar_email
 
 with open('config.ini') as arq:
     conf=loads(arq.read())
@@ -51,7 +53,8 @@ class user_ldap:
     def my_dados(self):
         self.conn.search(f'{base}',
                         f'(&(objectclass=user)(sAMAccountName={self.user}))' ,
-                        attributes=['cn','sAMAccountName','distinguishedName','memberof','mail','givenname','info'],
+                        attributes=['cn','sAMAccountName','distinguishedName','memberof','telephoneNumber',
+                                    'mail','givenname','info'],
                         search_scope=SUBTREE)
         i=self.conn.entries[0]
         self.all_dados={'user':valid(f'{i.cn}'),
@@ -62,13 +65,14 @@ class user_ldap:
                         'mail': valid(f'{i.sAMAccountName}')+dominio,
                         'token':self.userID,
                         'DN': f'{i.distinguishedName}',
+                        'telefone':f'{i.telephoneNumber}',
                         'info':f'{i.info}'}
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20):
         text=f'(&(objectclass=user)(cn={nome}*))'
         ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof',
-            'distinguishedName','info','sAMAccountName','userAccountControl']
+            'distinguishedName','info','sAMAccountName','userAccountControl','telephoneNumber']
         self.conn.search(base, text ,attributes=ll)
         dados={}
         cont=1
@@ -87,6 +91,7 @@ class user_ldap:
                         'DN': f'{i.distinguishedName}',
                         'info':f'{i.info}',
                         'login':f'{i.sAMAccountName}',
+                        'telefone':f'{i.telephoneNumber}',
                         'estado':i.userAccountControl.value & 2 != 2})
         return dados
 
@@ -123,14 +128,15 @@ class user_ldap:
                 'mail':dados.get('email2'),                     #email segundario
                 'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
                 'userAccountControl':'66080',                   #estado da conta
-                'info':f"criador: {self.all_dados['DN']}"}      #informação do criador
-        add_aluno =grupos.get("add_aluno") 
-        add_servidor =grupos.get("add_servidor") 
+                'info':f"criador: {self.all_dados['DN']}",      #informação do criador
+                'telephoneNumber':f'{dados.get("telefone")}'}
+        add_aluno =grupos.get("ADD_ALUNO") 
+        add_servidor =grupos.get("ADD_SERVIDOR") 
 
         if add_aluno in self.all_dados['memberof']:
-            GP=grupos.get('aluno')
+            GP=grupos.get('ALUNO')
         elif add_servidor in self.all_dados['memberof']:
-            GP=grupos.get('servidor')
+            GP=grupos.get('SERVIDOR')
         else:
             return {'response':False,'mensg':'sem autorização','login':'None'}
         r=self.conn.add(DN,attributes=attr)
@@ -242,3 +248,30 @@ class user_ldap:
         if DN==self.all_dados['DN']:
             return {'response':False , 'mensg':'erro de user.DN'}
         return self.exec_pwd(DN,new_pwd)
+    
+    def modify_my_count(self,dados):
+        tell=dados.get('tell')
+        email=dados.get('email')
+        token=dados.get('token')
+        attr={}
+
+        if tell:
+            attr['telephoneNumber']=[(MODIFY_REPLACE,[tell])]
+        if email:
+            if not token:
+                self.codico=f'UFNT-{randint(100,999)}'
+                texto=f'''
+Ola {self.all_dados['user'].title()}. <br>
+Foi detectado uma solicitação de mudança de email secundario pelo SLi-<br>
+copie e cole o codigo: <h2>{self.codico}</h2>
+<br>
+Caso não tenha sido você, entre em contado com setor responsavél para mudar sua senha e ignore esse email'''
+                enviar_email(email,'validar email',texto)
+                return {'response':True, 'mensg':f'verificar {email}'}
+            elif token !='teste.15975369874123658' and token != self.codico :
+                return {'response':False, 'mensg':f'codico invalido'}
+            attr['mail']=[(MODIFY_REPLACE,[email])]
+        self.conn.modify(self.all_dados['DN'],attr)
+        if self.conn.result['result']==0:
+            return {'response':True, 'mensg':'Dados atualizados'}
+        return {'response':False, 'mensg':'erro'}

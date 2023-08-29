@@ -16,6 +16,7 @@ import requests
 
 login_app=True             #para testar o login na API
 login_logout_user=True     #para testar o login do user
+teste_de_alter_dados=True  #para testar modificar email2 e telefone
 pesquisar_usuario=True     #para testar pesquisar por usuarios
 pesquisar_grupos=True      #para testar pesquisar por grupos
 add_rm_usuario=True        #para testar criar e pagar usuario
@@ -84,7 +85,10 @@ def teste_init_api(dados):
 
 @decora('login de usuario')
 def teste_login_user(login):
-    re=loads(requests.post(f"{rota}/{chave}/login",json=login).text)
+    print(chave)
+    re=requests.post(f"{rota}/{chave}/login",json=login).text
+    print(re)
+    re=loads(re)
     return (re['sAMAccountName'] == login['user']) , 'passou!' , re
 
 
@@ -189,8 +193,8 @@ if add_rm_grupo:
         'dd':{"DN":f"CN={grupo},CN=Users,DC=ufnt,DC=local"}}
     teste_endpoint(dados)
 
+##### remover usuario
 if add_rm_usuario:
-    ##### remover usuario
     dados={'end':'delete_user',
         'dd':{"DN":f"CN={nome},CN=Users,DC=ufnt,DC=local"}}
     teste_endpoint(dados)
@@ -200,6 +204,19 @@ if senha_self:
     dados={'end':'reset_pwd',
         'dd':{   "pwd":login['pwd'],
                     "new_pwd":login['pwd']}}
+    teste_endpoint(dados)
+
+
+
+##### mudar os dados telefone e email e validar email
+if teste_de_alter_dados:
+    dados={'end':'alter_count',
+        'dd':{'tell':'91980808184',
+           'email':'williams.ferreira@mail.uft.edu.br'}}
+    teste_endpoint(dados)
+    print('*****validar TOKEN*****')
+    dados['dd']['token']='teste.15975369874123658'
+    print(dados)
     teste_endpoint(dados)
 
 
