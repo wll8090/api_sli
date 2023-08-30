@@ -32,7 +32,7 @@ login_logout_user=login_logout_user|add_rm_usuario|add_rm_grupo|senha_self|senha
 
 
 
-with open('config.ini','r') as arq:
+with open('./config.ini','r') as arq:
     dados=loads(arq.read())
 
 
@@ -51,7 +51,7 @@ def decora(msg):
             print(f'\n**** Teste de: {msg} ****')
             
             re,ree,dados =func(dados)
-            print(re)
+            print(re,'---------------------')
             if  re:
                 print(f'OK:{ree}')
             else: 
@@ -86,7 +86,7 @@ def teste_init_api(dados):
 @decora('login de usuario')
 def teste_login_user(login):
     print(chave)
-    re=requests.post(f"{rota}/{chave}/login",json=login).text
+    re=requests.post(f"{rota}/{chave}/login/swswsw",json=login).text
     print(re)
     re=loads(re)
     return (re['sAMAccountName'] == login['user']) , 'passou!' , re
@@ -111,6 +111,7 @@ def teste_de_deslog_de_usuario(dados):
 def teste_endpoint(dados):
     print(f'****-->{dados["end"]}')
     r=f"{rota}/{chave}/{user}/{dados['end']}"
+    print(f'Em: {r}')
     re=loads(requests.post(r, json=dados['dd'], headers=head).text)
     return re['response'] , re['mensg'] , None
 
@@ -216,7 +217,6 @@ if teste_de_alter_dados:
     teste_endpoint(dados)
     print('*****validar TOKEN*****')
     dados['dd']['token']='teste.15975369874123658'
-    print(dados)
     teste_endpoint(dados)
 
 

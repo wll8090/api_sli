@@ -130,9 +130,9 @@ class user_ldap:
                 'userAccountControl':'66080',                   #estado da conta
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
                 'telephoneNumber':f'{dados.get("telefone")}'}
+        
         add_aluno =grupos.get("ADD_ALUNO") 
         add_servidor =grupos.get("ADD_SERVIDOR") 
-
         if add_aluno in self.all_dados['memberof']:
             GP=grupos.get('ALUNO')
         elif add_servidor in self.all_dados['memberof']:
@@ -143,7 +143,8 @@ class user_ldap:
         c=login
         b='usuario criado'
         if r:
-            command=f'dsmod user "{DN}" -pwd "{dados["pwd"]}" -mustchpwd no'
+            pwd=f'Senha@{randint(1000,9999)}'
+            command=f'dsmod user "{DN}" -pwd "{pwd}" -mustchpwd no'
             a='passa sem shell'
             if shell:
                 a=sub.run(command,shell=1,capture_output=1,text=1).stdout
@@ -152,6 +153,11 @@ class user_ldap:
                 self.conn.delete(DN)
                 r=False
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
+        texto=f'''
+Ola {nome}.
+
+'''
+        enviar_email(dados.get('email2'),'Senha de acesso')
         return {'response':r,'mensg':b,'login':c}
     
     def rm_user(self,dados):
@@ -260,13 +266,8 @@ class user_ldap:
         if email:
             if not token:
                 self.codico=f'UFNT-{randint(100,999)}'
-                texto=f'''
-Ola {self.all_dados['user'].title()}. <br>
-Foi detectado uma solicitação de mudança de email secundario pelo SLi-<br>
-copie e cole o codigo: <h2>{self.codico}</h2>
-<br>
-Caso não tenha sido você, entre em contado com setor responsavél para mudar sua senha e ignore esse email'''
-                enviar_email(email,'validar email',texto)
+                texto=open('confirmar_email.html').read()
+                enviar_email(email,'validar email',texto.format(self.all_dados['user'].title(),self.codico))
                 return {'response':True, 'mensg':f'verificar {email}'}
             elif token !='teste.15975369874123658' and token != self.codico :
                 return {'response':False, 'mensg':f'codico invalido'}

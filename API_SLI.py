@@ -41,34 +41,6 @@ def logon(dados):
         return user_l.my_dados()
     else: return {'resmpose':False,'mensg':'usuario ou senha incorreto'} 
 
-
-def validar_tokem(func):
-    @wraps(func)
-    def new_func(seg,user,acao):
-        tt=request.headers.get('Authorization')
-        tokem=dict([tt.split(' ') if tt else ['a','b']])
-        bearer=tokem.get('Bearer')
-        if not val_tokem and user in ldap_usrs:   ##  <<--- passa tudo (tokem)
-            return func(seg,user,acao)
-        if user not in ldap_usrs or not bearer:
-            return jsonify(msgerro)
-        if ldap_usrs[user].userID==bearer:
-            return func(seg,user,acao)
-        return jsonify(msgerro)
-    return new_func
-
-
-def validar_api(func):
-    @wraps(func)
-    def new_funtion(rota_seg,user='',acao=''):
-        if not api_assinada or rota_seg != seg:
-            return erro404()
-        if user: return func(rota_seg,user,acao)
-        else: return func(rota_seg)
-    return new_funtion
-
-
-
 def assinar():
     global cript,assinado
     assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
@@ -122,18 +94,21 @@ def rotas_fechadas(app):
     if 'rotas_ocutas' in app.view_functions: 
         return True
 
-    @app.route(f'/<rota_seg>/login/',methods=['post'])
-    @validar_api
-    def login(rota_seg):
-        dados=json.loads(request.data)
-        re=logon(dados)
-        return jsonify(re)
+    @app.route('/<rota_seg>/<user>/<acao>',methods=['GET','POST'])
+    def rotasocultas(rota_seg,user,acao):
 
+        if not api_assinada or rota_seg != seg:
+            return erro404()
 
-    @app.route(f'/<rota_seg>/<user>/<acao>/',methods=['GET','POST'])
-    @validar_api
-    @validar_tokem
-    def rotas_ocutas(rota_seg,user,acao):
+        if user != 'login':
+            tt=request.headers.get('Authorization')
+            tokem=dict([tt.split(' ') if tt else ['a','b']])
+            bearer=tokem.get('Bearer')
+            if user not in ldap_usrs or not bearer:
+                return jsonify(msgerro)
+            if ldap_usrs[user].userID !=bearer:
+                return jsonify(msgerro)
+
         re='nada'
         if request.method == 'GET':   #todos os GETS
             args=request.args
@@ -146,10 +121,12 @@ def rotas_fechadas(app):
                 aa.logout()
                 del(aa)
                 re={'response':True}
-
+        
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
-            if acao=='add_user':                        #adiniona novo usuario
+            if user=='login':
+                re=logon(dados)
+            elif acao=='add_user':                        #adiniona novo usuario
                 re=ldap_usrs[user].adduser(dados)
             elif acao == 'add_group':                   #adiciona novo grupo 
                 re=ldap_usrs[user].creat_group(dados)
@@ -165,8 +142,11 @@ def rotas_fechadas(app):
                 re=ldap_usrs[user].user_senha(dados)
             elif acao == 'alter_count':
                 re=ldap_usrs[user].modify_my_count(dados)
+    
+        
         if re=='nada': return erro404()
         return jsonify(re)
+
 
 ####################################################################
 
