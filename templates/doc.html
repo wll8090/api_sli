@@ -93,7 +93,7 @@ li {
             </li>
 
 
-            <li> <span class="rota">/$chave/login</span>
+            <li> <span class="rota">/$chave/login/login</span>
                 <div class="req">
                     Meth:'POST'  ( RAW -> json) {'user':str-> $login_do_usuario , 'pwd':str-> $senha}<br>
                     Out:'json'  ->  {'givenname':str , 'mail':str , 'mail2':str , 'memberof':list , 'sAMAccountName':str , 'token':str , 'user':str}
@@ -127,9 +127,9 @@ li {
                     Meth:'GET'  ( get -> keys) {'chr':str , 'pag':int ,'qp':int}<br>
                     Out:'json'  ->  {'atual_pg':int , 'total_pg':int , 'users':list*}  
                     <br>-> list* -> [dict*] 
-                    <br>-> dict* -> {"cn":str-> nome , 'givenname':str-> login , 'mail':str-> email ,
-                                     'memberof':list-> grupos , 'telephonenumber':str-> telefone ,'info':str -> criador , 
-                                     login:str , 'estado':bool -> ativado}
+                    <br>-> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email ,
+                                     'memberof':list-> grupos , 'telefone':str-> telefone ,'info':str -> criador , 
+                                     'login':str , 'estado':bool -> ativado , 'DN':str-> nomeDistinto}
                 </div>
                 <div class="resp">
                     Rota para buscar usuarios <br>
@@ -145,7 +145,7 @@ li {
 
             <li> <span class="rota">/$chave/$user/add_user</span>
                 <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'nome':str , 'pwd':str , 'email2':str , 'desc':str}<br>
+                    Meth:'POST'  ( raw -> keys) {'nome':str , 'email2':str , 'desc':str}<br>
                     Out:'json'  ->  {'response':bool , 'login':str , 'mensg':str}  
                 </div>
                 <div class="resp">
@@ -153,6 +153,7 @@ li {
                     'response' : se foi criado. <br>
                     'mensg' : varia de acordo com o ocorrido ['usuario criado' , 'usuario ja existe' , 'login ja existe'], <br>
                     'login' : mostra o login criado para o usuario, <br>
+                    Um email será diparado para o usuario criado com as suas informações.
                 </div>
             </li>
 
@@ -255,6 +256,19 @@ li {
                     Rota para mudar a senha de outros usuario.<br>
                     "DN" -> do usuario que se deseja mudar a senha. <br>
                     "new_pwd" -> nova senha.
+                </div>
+            </li>
+
+
+            <li> <span class="rota">/$chave/$user/alter_count</span>
+                <div class="req">
+                    Meth:'POST'  ( raw -> keys) {'tell':str , 'email':str, ['token': str]}<br>
+                    Out:'json'  ->  {'response':bool , 'mensg':str}  
+                </div>
+                <div class="resp">
+                    Rota para mudar o telefone ou email do usuario.<br>
+                    "token" -> é enviado por email deve ser enviado em POST^2. <br>
+                    'tell' e 'email' são opcionais.
                 </div>
             </li>
 

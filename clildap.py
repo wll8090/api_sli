@@ -6,6 +6,7 @@ from json import loads
 from datetime import datetime
 from random import randint
 from seed_email import enviar_email
+from jinja2 import Template
 
 with open('config.ini') as arq:
     conf=loads(arq.read())
@@ -18,6 +19,9 @@ tokem=conf.get('testes').get('FAKE_TOKEM')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
 shell=conf.get('testes').get('SHELL')
 grupos=conf.get('DN_grupos')
+boasvinda=conf.get('conf_email').get('BOASVINDA')
+confirmaremail=conf.get('conf_email').get('CONFIRMAREMAIL')
+
 
 
 def valid(dd):
@@ -85,13 +89,12 @@ class user_ldap:
             pag.append({'cn':f'{i.cn}'.replace("[]",''),
                         'givenname': f'{i.givenname}'.replace("[]",''),
                         'memberof': f'{i.memberof}'.replace("[]",''),
-                        'telephonenumber': f'{i.telephonenumber}'.replace("[]",''),
+                        'telefone': f'{i.telephonenumber}'.replace("[]",''),
                         'mail': f'{i.mail}'.replace("[]",''),
                         'givenname': f'{i.givenname}'.replace("[]",''),
                         'DN': f'{i.distinguishedName}',
                         'info':f'{i.info}',
                         'login':f'{i.sAMAccountName}',
-                        'telefone':f'{i.telephoneNumber}',
                         'estado':i.userAccountControl.value & 2 != 2})
         return dados
 
@@ -153,11 +156,9 @@ class user_ldap:
                 self.conn.delete(DN)
                 r=False
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
-        texto=f'''
-Ola {nome}.
-
-'''
-        enviar_email(dados.get('email2'),'Senha de acesso')
+        texto= open(boasvinda,encoding='utf8').read()
+        msg=Template(texto).render(nome=nome, login=login, pwd=pwd)
+        enviar_email(dados.get('email2'),'Senha de acesso',msg)
         return {'response':r,'mensg':b,'login':c}
     
     def rm_user(self,dados):
@@ -265,12 +266,13 @@ Ola {nome}.
             attr['telephoneNumber']=[(MODIFY_REPLACE,[tell])]
         if email:
             if not token:
-                self.codico=f'UFNT-{randint(100,999)}'
-                texto=open('confirmar_email.html').read()
-                enviar_email(email,'validar email',texto.format(self.all_dados['user'].title(),self.codico))
+                self.codigo=f'UFNT-{randint(100,999)}'
+                texto=open(confirmaremail,encoding='utf8').read()
+                msg=Template(texto).render(nome=self.all_dados['user'],codigo=self.codigo)
+                enviar_email(email,'validar email',msg)
                 return {'response':True, 'mensg':f'verificar {email}'}
-            elif token !='teste.15975369874123658' and token != self.codico :
-                return {'response':False, 'mensg':f'codico invalido'}
+            elif token !='teste.15975369874123658' and token != self.codigo :
+                return {'response':False, 'mensg':f'codigo invalido'}
             attr['mail']=[(MODIFY_REPLACE,[email])]
         self.conn.modify(self.all_dados['DN'],attr)
         if self.conn.result['result']==0:

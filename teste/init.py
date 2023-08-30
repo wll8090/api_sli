@@ -17,13 +17,13 @@ import requests
 login_app=True             #para testar o login na API
 login_logout_user=True     #para testar o login do user
 teste_de_alter_dados=True  #para testar modificar email2 e telefone
-pesquisar_usuario=True     #para testar pesquisar por usuarios
-pesquisar_grupos=True      #para testar pesquisar por grupos
+pesquisar_usuario=False     #para testar pesquisar por usuarios
+pesquisar_grupos=False      #para testar pesquisar por grupos
 add_rm_usuario=True        #para testar criar e pagar usuario
-add_rm_grupo=True          #para testar criar e apagar grupo
-senha_self=True            #para testar trocar senha do proprio usuario
-senha_users=True            #para testar trocar a senha de outros usuarios
-mecher_no_grupo=True       #para testar adicionar e remover usuarios de grupo
+add_rm_grupo=False          #para testar criar e apagar grupo
+senha_self=False            #para testar trocar senha do proprio usuario
+senha_users=False            #para testar trocar a senha de outros usuarios
+mecher_no_grupo=False       #para testar adicionar e remover usuarios de grupo
 
 
 
@@ -146,7 +146,7 @@ if add_rm_usuario:
     dados={'end':'add_user',
             'dd':{   "nome":nome,
                     "pwd":"@Aa1020",
-                    "email2":"blabla@hotimail.com",
+                    "email2":"williams.ferreira@mail.uft.edu.br",
                     "desc":"usuario de teste"}}
     teste_endpoint(dados)
 

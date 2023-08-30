@@ -13,7 +13,7 @@ email=conf['conf_email']['EMAIL']
 pwd=conf['conf_email']['KEY_APP']
 roda_pe=conf['conf_email']['FILE_RODAPE']
 
-roda_pe=open(roda_pe).read()
+roda_pe=open(roda_pe,encoding='utf8').read()
 
 hora=datetime.now().strftime("%H:%M  %d/%m/%Y")
 

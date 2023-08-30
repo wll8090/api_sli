@@ -140,7 +140,7 @@ def rotas_fechadas(app):
                 re=ldap_usrs[user].troca_senha(dados)
             elif acao == 'user_pwd':                    #troca senha de outros usuarios
                 re=ldap_usrs[user].user_senha(dados)
-            elif acao == 'alter_count':
+            elif acao == 'alter_count':                 #troca o telefone e email do self.usuario
                 re=ldap_usrs[user].modify_my_count(dados)
     
         
