@@ -19,7 +19,7 @@ login_logout_user=True     #para testar o login do user
 teste_de_alter_dados=True  #para testar modificar email2 e telefone
 pesquisar_usuario=False     #para testar pesquisar por usuarios
 pesquisar_grupos=False      #para testar pesquisar por grupos
-add_rm_usuario=True        #para testar criar e pagar usuario
+add_rm_usuario=False        #para testar criar e pagar usuario
 add_rm_grupo=False          #para testar criar e apagar grupo
 senha_self=False            #para testar trocar senha do proprio usuario
 senha_users=False            #para testar trocar a senha de outros usuarios
@@ -42,7 +42,7 @@ flag=dados['init']['FLAG']
 
 rota=f'http://{host}:5001'
 
-login={"user":"user.root","pwd":"@Aa1020"}
+login={"user":"maria.addservidor","pwd":"@Aa1020"}
 
 
 def decora(msg):
@@ -94,9 +94,10 @@ def teste_login_user(login):
 
 @decora('pesquisa de usuario&grupo')
 def teste_de_pesquisa(dados):
-    print(f'****{dados}')
+    print(f'****{dados} --> {pesquisar}')
     r=f"{rota}/{chave}/{user}/{pesquisar}"
     re=loads(requests.get(r,headers=head).text)
+    print(re)
     return re.get('atual_pg')==1, 'passou!', None
 
 @decora('logout de usuario')

@@ -99,7 +99,6 @@ def rotas_fechadas(app):
 
         if not api_assinada or rota_seg != seg:
             return erro404()
-
         if user != 'login':
             tt=request.headers.get('Authorization')
             tokem=dict([tt.split(' ') if tt else ['a','b']])

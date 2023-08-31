@@ -1,4 +1,5 @@
 from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
+from flask import render_template
 import subprocess as sub
 from hashlib import sha256
 from random import randint
@@ -77,6 +78,16 @@ class user_ldap:
         text=f'(&(objectclass=user)(cn={nome}*))'
         ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof',
             'distinguishedName','info','sAMAccountName','userAccountControl','telephoneNumber']
+        
+        if "CN=root,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
+            pass
+        elif "CN=add_aluno,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
+            text=text.replace('*))',f"*)(memberof={grupos['ALUNO']}))")
+        elif "CN=add_servidor,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
+            text=text.replace('*))',f"*)(memberof={grupos['SERVIDOR']}))")
+        else:
+            return {'response':False,'mensg':'sem autorização'}
+        
         self.conn.search(base, text ,attributes=ll)
         dados={}
         cont=1
@@ -156,7 +167,7 @@ class user_ldap:
                 self.conn.delete(DN)
                 r=False
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
-        texto= open(boasvinda,encoding='utf8').read()
+        texto= open(boasvinda,encoding='iso8859-1').read()
         msg=Template(texto).render(nome=nome, login=login, pwd=pwd)
         enviar_email(dados.get('email2'),'Senha de acesso',msg)
         return {'response':r,'mensg':b,'login':c}
@@ -267,7 +278,7 @@ class user_ldap:
         if email:
             if not token:
                 self.codigo=f'UFNT-{randint(100,999)}'
-                texto=open(confirmaremail,encoding='utf8').read()
+                texto=open(confirmaremail,encoding='iso8859-1').read()
                 msg=Template(texto).render(nome=self.all_dados['user'],codigo=self.codigo)
                 enviar_email(email,'validar email',msg)
                 return {'response':True, 'mensg':f'verificar {email}'}
@@ -276,5 +287,6 @@ class user_ldap:
             attr['mail']=[(MODIFY_REPLACE,[email])]
         self.conn.modify(self.all_dados['DN'],attr)
         if self.conn.result['result']==0:
+            del self.codigo
             return {'response':True, 'mensg':'Dados atualizados'}
         return {'response':False, 'mensg':'erro'}
