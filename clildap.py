@@ -276,6 +276,10 @@ class user_ldap:
         if tell:
             attr['telephoneNumber']=[(MODIFY_REPLACE,[tell])]
         if email:
+            if email == self.all_dados.get('mail2'):
+                return {'response':False, 'mensg':'email é o mesmo'}
+            elif email.endswith(dominio):
+                return {'response':False, 'mensg':f'a email não pode ser de {dominio}'}
             if not token:
                 self.codigo=f'UFNT-{randint(100,999)}'
                 texto=open(confirmaremail,encoding='iso8859-1').read()
