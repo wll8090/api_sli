@@ -53,7 +53,7 @@ class user_ldap:
     
     def logout(self):
         self.conn.unbind()
-        return {'response':True}
+        return {'response':True,'mensg':'deslog'}
     
     def my_dados(self):
         self.conn.search(f'{base}',

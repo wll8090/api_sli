@@ -181,6 +181,13 @@ def main():
     if logs:
         @app.route('/log')
         def log():
+            assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
+            dia=datetime.now().strftime(f"%d/%m-{flag}-%d/%m")
+            cript=sha256(dia.encode('utf8')).hexdigest()
+            if liberado:
+                assina ='25/07-assinado-25/07'
+                cript='0f7b8c3893290e18eaec7c09d7d794d13a83b79ab68bc3a5c228650ee87ff85f'
+            assinado=sha256((cript+assina).encode('utf8')).hexdigest()
             seg=assinado[-20:-10]
             texte=open(f'logs/erro_{data}.log').read()
             return f'''get: {cript} <br>

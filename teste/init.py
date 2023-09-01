@@ -57,7 +57,7 @@ def decora(msg):
             else: 
                 print(f'error em :{msg} -->{ree}')
                 print('^'*30)
-                quit() 
+                
             print('-'*30,'\n\n')
             sleep(1)
             return re,dados
