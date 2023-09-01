@@ -118,6 +118,9 @@ class user_ldap:
     def adduser(self,dados:dict) ->dict :   #adiciona usuario  
         nome=dados['nome']                  # dados é um json
         l_nome=nome.split()
+        email2=dados.get('email2')
+        if email2.endswith(dominio):
+            return {'response':False,'mensg':f'email secundario não pode ser de {dominio}'}
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
         login1=login=f'{fn}.{l_nome[-1]}'.lower()
@@ -139,7 +142,7 @@ class user_ldap:
                 'sn':' '.join(l_nome[1:]),                      #sobre nome
                 'sAMAccountName':login,                         #login
                 'description':dados["desc"],                    #descrição da conta
-                'mail':dados.get('email2'),                     #email segundario
+                'mail':email2,                     #email segundario
                 'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
                 'userAccountControl':'66080',                   #estado da conta
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
