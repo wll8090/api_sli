@@ -16,14 +16,14 @@ import requests
 
 login_app=True             #para testar o login na API
 login_logout_user=True     #para testar o login do user
-teste_de_alter_dados=False  #para testar modificar email2 e telefone
-pesquisar_usuario=False     #para testar pesquisar por usuarios
-pesquisar_grupos=False      #para testar pesquisar por grupos
-add_rm_usuario=False        #para testar criar e pagar usuario
-add_rm_grupo=False          #para testar criar e apagar grupo
-senha_self=False            #para testar trocar senha do proprio usuario
-senha_users=False            #para testar trocar a senha de outros usuarios
-mecher_no_grupo=False       #para testar adicionar e remover usuarios de grupo
+teste_de_alter_dados=True  #para testar modificar email2 e telefone
+pesquisar_usuario=True     #para testar pesquisar por usuarios
+pesquisar_grupos=True      #para testar pesquisar por grupos
+add_rm_usuario=True        #para testar criar e pagar usuario
+add_rm_grupo=True          #para testar criar e apagar grupo
+senha_self=True            #para testar trocar senha do proprio usuario
+senha_users=True            #para testar trocar a senha de outros usuarios
+mecher_no_grupo=True       #para testar adicionar e remover usuarios de grupo
 
 
 
@@ -148,7 +148,9 @@ if add_rm_usuario:
             'dd':{   "nome":nome,
                     "pwd":"@Aa1020",
                     "email2":"williams.ferreira@mail.uft.edu.br",
-                    "desc":"usuario de teste"}}
+                    "desc":"usuario de teste",
+                    "telefone":"90908080",
+                    "cpf":"12345678909"}}
     teste_endpoint(dados)
 
 

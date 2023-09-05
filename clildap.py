@@ -1,5 +1,4 @@
 from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
-from flask import render_template
 import subprocess as sub
 from hashlib import sha256
 from random import randint
