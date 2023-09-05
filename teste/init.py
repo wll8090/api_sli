@@ -16,7 +16,7 @@ import requests
 
 login_app=True             #para testar o login na API
 login_logout_user=True     #para testar o login do user
-teste_de_alter_dados=True  #para testar modificar email2 e telefone
+teste_de_alter_dados=False  #para testar modificar email2 e telefone
 pesquisar_usuario=False     #para testar pesquisar por usuarios
 pesquisar_grupos=False      #para testar pesquisar por grupos
 add_rm_usuario=False        #para testar criar e pagar usuario
@@ -42,7 +42,7 @@ flag=dados['init']['FLAG']
 
 rota=f'http://{host}:5001'
 
-login={"user":"maria.addservidor","pwd":"@Aa1020"}
+login={"user":"user.root","pwd":"@Aa1020"}
 
 
 def decora(msg):

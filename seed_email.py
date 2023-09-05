@@ -45,13 +45,8 @@ em: {hora}
     servidor=smtplib.SMTP(server,port)
     servidor.starttls()
     servidor.login(email,pwd)
-    servidor.sendmail(email, destino, msg.as_string())
+    a=servidor.sendmail(email, destino, msg.as_string())
     servidor.quit()
-
-
-
-
-
 
 
 

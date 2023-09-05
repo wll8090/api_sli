@@ -24,6 +24,10 @@ boasvinda=conf.get('conf_email').get('BOASVINDA')
 confirmaremail=conf.get('conf_email').get('CONFIRMAREMAIL')
 
 
+attributes=['cn','sAMAccountName','distinguishedName','memberof','telephonenumber',
+            'mail','givenname','info','division','userAccountControl']
+
+
 
 def valid(dd):
     return f'{dd}'.replace("[]",'')
@@ -56,11 +60,7 @@ class user_ldap:
         return {'response':True,'mensg':'deslog'}
     
     def my_dados(self):
-        self.conn.search(f'{base}',
-                        f'(&(objectclass=user)(sAMAccountName={self.user}))' ,
-                        attributes=['cn','sAMAccountName','distinguishedName','memberof','telephoneNumber',
-                                    'mail','givenname','info'],
-                        search_scope=SUBTREE)
+        self.conn.search(f'{base}', f'(&(objectclass=user)(sAMAccountName={self.user}))' , attributes=attributes , search_scope=SUBTREE)
         i=self.conn.entries[0]
         self.all_dados={'user':valid(f'{i.cn}'),
                         'givenname': valid(f'{i.givenname}'),
@@ -70,14 +70,13 @@ class user_ldap:
                         'mail': valid(f'{i.sAMAccountName}')+dominio,
                         'token':self.userID,
                         'DN': f'{i.distinguishedName}',
-                        'telefone':f'{i.telephoneNumber}',
-                        'info':f'{i.info}'}
+                        'telefone':f'{i.telephonenumber}',
+                        'info':f'{i.info}',
+                        'cpf':f'{i.division}'}
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20):
         text=f'(&(objectclass=user)(cn={nome}*))'
-        ll=['displayname','cn','givenname','mail','telephonenumber','objectclass','memberof',
-            'distinguishedName','info','sAMAccountName','userAccountControl','telephoneNumber']
         
         if "CN=root,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
             pass
@@ -88,7 +87,7 @@ class user_ldap:
         else:
             return {'response':False,'mensg':'sem autorização'}
         
-        self.conn.search(base, text ,attributes=ll)
+        self.conn.search(base, text ,attributes=attributes)
         dados={}
         cont=1
         for n,i in enumerate(self.conn.entries):
@@ -106,7 +105,8 @@ class user_ldap:
                         'DN': f'{i.distinguishedName}',
                         'info':f'{i.info}',
                         'login':f'{i.sAMAccountName}',
-                        'estado':i.userAccountControl.value & 2 != 2})
+                        'estado':i.userAccountControl.value & 2 != 2,
+                        'cpf':f'{i.division}'})
         return dados
 
     def validar_objeto(self,attr,valor):
@@ -142,11 +142,12 @@ class user_ldap:
                 'sn':' '.join(l_nome[1:]),                      #sobre nome
                 'sAMAccountName':login,                         #login
                 'description':dados["desc"],                    #descrição da conta
-                'mail':email2,                     #email segundario
+                'mail':email2,                                  #email segundario
                 'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
                 'userAccountControl':'66080',                   #estado da conta
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
-                'telephoneNumber':f'{dados.get("telefone")}'}
+                'telephoneNumber':dados.get("telefone"),        #telefone
+                'division':dados.get('cpf')}                    #cpf
         
         add_aluno =grupos.get("ADD_ALUNO") 
         add_servidor =grupos.get("ADD_SERVIDOR") 
