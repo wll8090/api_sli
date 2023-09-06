@@ -40,23 +40,153 @@ li {
     font-family: monospace;
     background: #ccc;
     padding: 0px 15px;
+    cursor: pointer;
 }
 .req {
-    margin: 19px;
+    margin: 0px;
     font-family: monospace;
     font-size: 17px;
 }
+
 .resp {
-    margin: 0px 19px;
+    margin: 0px;
     font-size: 17px;
+}
+
+.aa{
+    font-size: 0px;
+}
+
+.visto{ 
+        animation: in-blok .5s cubic-bezier(0.4, 0.01, 0.33, 1.12) forwards;
+        
+}
+
+@keyframes in-blok{
+    0%{
+        font-size: 0px;
+        margin: 0px;
+    }
+    100%{
+        font-size: 17px;
+        margin:19px ;
+        }
 }
 
 
 </style>
-   
 <title>Documentation</title>
 </head>
 <body>
+
+    {%set doc = {
+        '/doc':{
+            'meth':"GET",
+            'out':"html",
+            'msg':"Fazendo um 'get' a resposta se ver nessa documentação."},
+        
+        '/login/$chave':{
+            'meth':'GET',
+            'out':"'json' -> {'GET':sha256-> $chave , 'singned':sha256-> $chave_assinada}",
+            'msg':"Fazendo um 'get', a saída é um json com a chave enviada a API 'GET' e a chave assinada 'singned'. <br>
+                    OBS: 'singned' é a valiadação para liberação das ENDPOINT's cosumidas, deve ser tratada, ela acompanha as requisições para consumo da API."},
+        
+        '/$chave/login/login':{
+            'meth':"'POST' ( RAW -> json) {'user':str-> $login_do_usuario , 'pwd':str-> $senha}",
+            'out':"'json' -> {'DN':str , 'cpf':str , 'givenname':str , 'mail':str , 'mail2':str , 'memberof':list , 'sAMAccountName':str , 'telefone':str , 'token':str , 'user':str}",
+            'msg':"Rota para login de usuario <br>
+            A saída é os dados do usuario incluindo o tokem de altenticação, a cada login um novo token aleatorio é gerado.<br>
+            O tokem pode ser guardado em Cookie de forma simples e deve ser enviado para API como 'Bearer' (tokem de head)"},
+        
+        '/$chave/$user/logout':{
+            'meth':"GET",
+            'out':"'json' -> {'logout':str-> 'ok'}",
+            'msg':"Rota para deslogar usuario <br>
+            A saída é um ok."},
+        
+        '/$chave/$user/users':{
+            'meth':"'GET' ( get -> keys) {'chr':str , 'pag':int ,'qp':int}",
+            'out':"'json' -> {'atual_pg':int , 'total_pg':int , 'users':list*} <br>
+                -> list* -> [dict*]<br>
+                -> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telefone':str-> telefone ,'info':str -> criador , <br> 'login':str , 'estado':bool -> ativado , 'DN':str-> nomeDistinto}",
+            'msg':"Rota para buscar usuarios <br>
+                Para fazer buscar o usuario deve ser autorizado a essa função.<br>
+                chr -> caractere ou nome a ser buscado (cn).<br>
+                pag -> é a página solicitada.<br>
+                qp -> quantidade de usuarios por de página.<br>
+                A saída inclui o numero da página e a quantidade."},
+            
+        '/$chave/$user/add_user':{
+            'meth':"'POST' ( raw -> keys) {'nome':str , 'email2':str , 'desc':str , 'cpf':str , 'nescido':str}",
+            'out':"'json' -> {'response':bool , 'login':str , 'mensg':str}",
+            'msg':"Rota para criar usuario.<br>
+            'response' : se foi criado.<br>
+            'mensg' : varia de acordo com o ocorrido ['usuario criado' , 'usuario ja existe' , 'login ja existe'],<br>
+            'login' : mostra o login criado para o usuario,<br>
+            Um email será diparado para o usuario criado com as suas informações."},
+        
+        '/$chave/$user/delete_user':{
+            'meth':"'POST' ( raw -> keys) {'DN':str}",
+            'out':"'json' -> {'response':bool,'mensg':str}",
+            'msg':"Rota para deletar usuario. <br>
+            'response' : para deletado [true , false , null]."},
+
+        '/$chave/$user/groups':{
+            'meth':"'GET' ( get -> keys) {'chr':str , 'pag':int ,'qp':int , 'membros':int}",
+            'out':"'json' -> {'atual_pg':int , 'total_pg':int , 'groups':list*} <br>
+                -> list* -> [dict*]<br>
+                -> doct* -> {'DN':str , 'UGP':str , 'cn':str , 'membros':list** , 'info':str -> criador}<br>
+                -> list** -> [str]",
+            'msg':"Rota para buscar grupos.<br>
+                Para fazer buscar o usuario deve ser autorizado a essa função.<br>
+                chr -> caractere ou nome a ser buscado (cn).<br>
+                pag -> é a página solicitada.<br>
+                qp -> quantidade de usuarios por de página.<br>
+                membros -> para listar os usuarios de cada grupo 0 ou 1.<br>
+                A saída inclui o numero da pagina e a quantidade."},
+
+        '/$chave/$user/add_group':{
+            'meth':"'POST' ( raw -> keys) {'nome':str , 'desc':str}",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para adicionar grupos. <br>
+                dec -> para descrição do grupo"},
+
+        '/$chave/$user/modify_group':{
+            'meth':"'POST' ( raw -> keys) {'user':str , 'DN_group':str , 'modify': str -> 'add' | 'remove'}",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para adicionar e remover membro de grupos. <br>
+                'add' -> adicionar um usuario. <br>
+                'remove' -> remover usuario."},
+
+        '/$chave/$user/delete_group':{
+            'meth':"'POST' ( raw -> keys) {'DN':str }",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para remover grupo. <br>
+                'DN' -> é a identificação do grupo."},
+                
+        '/$chave/$user/reset_pwd':{
+            'meth':"'POST' ( raw -> keys) {'pwd':str , 'new_pwd':str}",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para mudar a senha do usuario. <br>
+                'pwd' -> senha atual. <br>
+                'new_pwd' -> nova senha."},
+            
+        '/$chave/$user/user_pwd':{
+            'meth':"'POST' ( raw -> keys) {'DN':str , 'new_pwd':str}",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para mudar a senha de outros usuario. <br>
+                'DN' -> do usuario que se deseja mudar a senha. <br>
+                'new_pwd' -> nova senha."},
+        
+        '/$chave/$user/alter_count':{
+            'meth':"'POST' ( raw -> keys) {'tell':str , 'email':str, ['token': str]}",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para mudar o telefone ou email do usuario. <br>
+            'token' -> é enviado por email deve ser enviado em POST^2. <br>
+            'tell' e 'email' são opcionais."},
+    }
+    %}
+
     <div class="topo">
         <div>
             API_SLI v0.1
@@ -65,218 +195,54 @@ li {
             by:williams_sousa
         </div>
     </div>
+    
     <div class="corpo">
         <span class="h1">Documentação para uso de API</span> <br><br>
         As rotas abaixo mostram as entradas e saída, além de como as requisições devem ser feita usado GET ou POST 
         <br>Caso não seja seguido, o servidor tera como resposta erro da casa de 500.
+        <br> <br>
+        <div class="resp"> *Após o login do user, as rotas vem conter o login do mesmo : <b>$user</b>. </div>
         <ul>
-            <li> <span class="rota">/doc</span> 
-                <div class="req">
-                    Meth:'GET' <br>
-                    out:'html' 
+            {%set lista=[]%}
+            {%set cont=0%}
+            {%for i in doc%}
+            {%set __ = lista.append(0)%}
+            {%set cont = lista | length%}
+            <li class="link" id="li{{cont}}" onclick="ver('div{{cont}}')"> 
+                <span class="rota">{{i}}</span> 
+                <div class="req aa div{{cont}} ">
+                    Meth:{{doc[i]['meth']}}<br>
+                    Out:{{doc[i]['out']}} 
                 </div>
-                <div class="resp">
-                    Fazendo um 'get' a resposta se ver nessa documentação.
-                </div>
-            </li>
-
-
-            <li> <span class="rota">/login/$chave</span>
-                <div class="req">
-                    Meth:'GET' <br>
-                    Out:'json'  ->  {'GET':sha256-> $chave , 'singned':sha256-> $chave_assinada}
-                </div>
-                <div class="resp">
-                    Fazendo um 'get', a saída é um json com a chave enviada a API 'GET' e a chave assinada 'singned'. <br>
-                    OBS: 'singned'  é a valiadação para liberação das ENDPOINT's cosumidas, deve ser tratada, ela acompanha as requisições para consumo da API. 
+                <div class="resp aa div{{cont}}"">
+                    {{doc[i]['msg']}}
                 </div>
             </li>
-
-
-            <li> <span class="rota">/$chave/login/login</span>
-                <div class="req">
-                    Meth:'POST'  ( RAW -> json) {'user':str-> $login_do_usuario , 'pwd':str-> $senha}<br>
-                    Out:'json'  ->  {'givenname':str , 'mail':str , 'mail2':str , 'memberof':list , 'sAMAccountName':str , 'token':str , 'user':str}
-                </div>
-                <div class="resp">
-                    Rota para login de usuario <br>
-                    A saída é os dados do usuario incluindo o tokem de altenticação, a cada login um novo token aleatorio é gerado.<br>
-                    O tokem pode ser guardado em Cookie de forma simples e deve ser enviado para API como 'Bearer' (tokem de head)
-                </div>
-            </li>
-            
-
-            <div class="resp"> Após o login do user, as rotas vem conter o login do mesmo. </div>
-
-
-            <li> <span class="rota">/$chave/$user/logout</span>
-                <div class="req">
-                    Meth:'GET' <br>
-                    Out:'json'  ->  {'logout':str-> 'ok'}
-                </div>
-                <div class="resp">
-                    Rota para deslogar usuario <br>
-                    A saída é um ok.
-                </div>
-            </li>
-
-
-
-            <li> <span class="rota">/$chave/$user/users</span>
-                <div class="req">
-                    Meth:'GET'  ( get -> keys) {'chr':str , 'pag':int ,'qp':int}<br>
-                    Out:'json'  ->  {'atual_pg':int , 'total_pg':int , 'users':list*}  
-                    <br>-> list* -> [dict*] 
-                    <br>-> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email ,
-                                     'memberof':list-> grupos , 'telefone':str-> telefone ,'info':str -> criador , 
-                                     'login':str , 'estado':bool -> ativado , 'DN':str-> nomeDistinto}
-                </div>
-                <div class="resp">
-                    Rota para buscar usuarios <br>
-                    Para fazer buscar o usuario deve ser autorizado a essa função. <br>
-                    chr -> caractere ou nome a ser buscado (cn). <br>
-                    pag -> é a página solicitada. <br>
-                    qp -> quantidade de usuarios por de página. <br>
-                    A saída inclui o numero da página e a quantidade.<br>
-                </div>
-            </li>
-
-
-
-            <li> <span class="rota">/$chave/$user/add_user</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'nome':str , 'email2':str , 'desc':str}<br>
-                    Out:'json'  ->  {'response':bool , 'login':str , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para criar usuario.<br>
-                    'response' : se foi criado. <br>
-                    'mensg' : varia de acordo com o ocorrido ['usuario criado' , 'usuario ja existe' , 'login ja existe'], <br>
-                    'login' : mostra o login criado para o usuario, <br>
-                    Um email será diparado para o usuario criado com as suas informações.
-                </div>
-            </li>
-
-
-
-            <li> <span class="rota">/$chave/$user/delete_user</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'DN':str}<br>
-                    Out:'json'  ->  {'response':bool,'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para deletar usuario.<br>
-                    'response' : para deletado  [true , false , null]. <br>
-                </div>
-            </li>
-
-
-
-
-            <li> <span class="rota">/$chave/$user/groups</span>
-                <div class="req">
-                    Meth:'GET'  ( get -> keys) {'chr':str , 'pag':int ,'qp':int , 'membros':int}<br>
-                    Out:'json'  ->  {'atual_pg':int , 'total_pg':int , 'groups':list*}  
-                    <br>-> list* -> [dict*] 
-                    <br>-> doct* -> {"DN":str , "UGP":str , "cn":str , "membros":list** , 'info':str -> criador}
-                    <br>-> list** -> [str]
-                </div>
-                <div class="resp">
-                    Rota para buscar grupos.<br>
-                    Para fazer buscar o usuario deve ser autorizado a essa função. <br>
-                    chr -> caractere ou nome a ser buscado (cn). <br>
-                    pag -> é a página solicitada. <br>
-                    qp -> quantidade de usuarios por de página. <br>
-                    membros -> para listar os usuarios de cada grupo 0 ou 1. <br>
-                    A saída inclui o numero da pagina e a quantidade.<br>
-                </div>
-            </li>
-
-
-
-
-            <li> <span class="rota">/$chave/$user/add_group</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'nome':str , 'desc':str}<br>
-                    Out:'json'  ->  {'response':bool , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para adicionar grupos.<br>
-                    dec -> para descrição do grupo
-                </div>
-            </li>
-
-
-
-            <li> <span class="rota">/$chave/$user/modify_group</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'user':str , 'DN_group':str , 'modify': str -> 'add' | 'remove'}<br>
-                    Out:'json'  ->  {'response':bool , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para adicionar e remover membro de grupos.<br>
-                    'add' -> adicionar um usuario. <br>
-                    'remove' -> remover usuario.
-                </div>
-            </li>
-
-
-
-            <li> <span class="rota">/$chave/$user/delete_group</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'DN':str }<br>
-                    Out:'json'  ->  {'response':bool , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para remover grupo.<br>
-                    "DN" -> é a identificação do grupo.
-                </div>
-            </li>
-
-
-            <li> <span class="rota">/$chave/$user/reset_pwd</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'pwd':str , 'new_pwd':str}<br>
-                    Out:'json'  ->  {'response':bool , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para mudar a senha do usuario.<br>
-                    "pwd" -> senha atual. <br>
-                    "new_pwd" -> nova senha.
-                </div>
-            </li>
-
-            
-            <li> <span class="rota">/$chave/$user/user_pwd</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'DN':str , 'new_pwd':str}<br>
-                    Out:'json'  ->  {'response':bool , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para mudar a senha de outros usuario.<br>
-                    "DN" -> do usuario que se deseja mudar a senha. <br>
-                    "new_pwd" -> nova senha.
-                </div>
-            </li>
-
-
-            <li> <span class="rota">/$chave/$user/alter_count</span>
-                <div class="req">
-                    Meth:'POST'  ( raw -> keys) {'tell':str , 'email':str, ['token': str]}<br>
-                    Out:'json'  ->  {'response':bool , 'mensg':str}  
-                </div>
-                <div class="resp">
-                    Rota para mudar o telefone ou email do usuario.<br>
-                    "token" -> é enviado por email deve ser enviado em POST^2. <br>
-                    'tell' e 'email' são opcionais.
-                </div>
-            </li>
-
-
-
+            {%endfor%}
         </ul>
 
     </div>
+
+<script>
+    function ver(id_div){
+        const aa=document.querySelectorAll('.visto');
+        console.log(aa)
+
+        if ( aa.length !==0){
+            aa.forEach(item =>{
+                item.classList.remove('visto');
+                })
+            };
+        const div=document.querySelectorAll('.'+id_div);
+        console.log(div)
+
+        div.forEach(element => {
+            console.log(element)
+            element.classList.add('visto');
+        });
+    }
+
+</script>
     
 </body>
 </html>

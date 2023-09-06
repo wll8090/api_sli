@@ -86,7 +86,9 @@ def teste_init_api(dados):
 @decora('login de usuario')
 def teste_login_user(login):
     print(chave)
-    re=requests.post(f"{rota}/{chave}/login/swswsw",json=login).text
+    rr=f"{rota}/{chave}/login/swswsw"
+    print(rr)
+    re=requests.post(rr,json=login).text
     print(re)
     re=loads(re)
     return (re['sAMAccountName'] == login['user']) , 'passou!' , re
