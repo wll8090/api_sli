@@ -58,9 +58,15 @@ li {
 }
 
 .visto{ 
-        animation: in-blok .5s cubic-bezier(0.4, 0.01, 0.33, 1.12) forwards;
-        
+        animation: in-blok .5s cubic-bezier(0.4, 0.01, 0.33, 1.12) forwards; 
 }
+.link:hover {
+    background: #f0e0fb;
+}
+.link:active {
+    background: #b44bfa;
+}
+
 
 @keyframes in-blok{
     0%{
@@ -117,7 +123,7 @@ li {
                 A saída inclui o numero da página e a quantidade."},
             
         '/$chave/$user/add_user':{
-            'meth':"'POST' ( raw -> keys) {'nome':str , 'email2':str , 'desc':str , 'cpf':str , 'nescido':str}",
+            'meth':"'POST' ( raw -> keys) {'nome':str , 'email2':str , 'desc':str , 'cpf':str , 'nescido':str , 'telefone':str}",
             'out':"'json' -> {'response':bool , 'login':str , 'mensg':str}",
             'msg':"Rota para criar usuario.<br>
             'response' : se foi criado.<br>
@@ -228,11 +234,10 @@ li {
         const aa=document.querySelectorAll('.visto');
         console.log(aa)
 
-        if ( aa.length !==0){
-            aa.forEach(item =>{
-                item.classList.remove('visto');
-                })
-            };
+        aa.forEach(item =>{
+            item.classList.remove('visto');
+            })
+        
         const div=document.querySelectorAll('.'+id_div);
         console.log(div)
 

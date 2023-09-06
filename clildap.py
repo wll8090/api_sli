@@ -100,7 +100,8 @@ class user_ldap:
                         'givenname': f'{i.givenname}'.replace("[]",''),
                         'memberof': f'{i.memberof}'.replace("[]",''),
                         'telefone': f'{i.telephonenumber}'.replace("[]",''),
-                        'mail': f'{i.mail}'.replace("[]",''),
+                        'mail2': f'{i.mail}'.replace("[]",''),
+                        'email':f'{i.sAMAccountName}{dominio}',
                         'givenname': f'{i.givenname}'.replace("[]",''),
                         'DN': f'{i.distinguishedName}',
                         'info':f'{i.info}',
@@ -116,9 +117,11 @@ class user_ldap:
         return(bool(self.conn.entries))
     
     def adduser(self,dados:dict) ->dict :   #adiciona usuario  
-        nome=dados['nome']                  # dados é um json
+        nome=dados['nome']                  #dados é um json
         l_nome=nome.split()
         email2=dados.get('email2')
+        tell=f'{dados.get("telefone")}'
+        desc = dados.get("desc")
         if email2.endswith(dominio):
             return {'response':False,'mensg':f'email secundario não pode ser de {dominio}'}
         fn=l_nome[0]
@@ -141,12 +144,12 @@ class user_ldap:
                 'givenName':l_nome[0],                          #primeiro nome
                 'sn':' '.join(l_nome[1:]),                      #sobre nome
                 'sAMAccountName':login,                         #login
-                'description':dados["desc"],                    #descrição da conta
+                'description':desc if desc else ' ',                #descrição da conta
                 'mail':email2,                                  #email segundario
                 'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
                 'userAccountControl':'66080',                   #estado da conta
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
-                'telephoneNumber':dados.get("telefone"),        #telefone
+                'telephoneNumber':tell if tell else ' ',        #telefone
                 'division':dados.get('cpf')}                    #cpf
         
         add_aluno =grupos.get("ADD_ALUNO") 
@@ -159,21 +162,18 @@ class user_ldap:
             return {'response':False,'mensg':'sem autorização','login':'None'}
         r=self.conn.add(DN,attributes=attr)
         c=login
-        b='usuario criado'
+        b='erro ao criar usuario'
         if r:
+            b='usuario criado'
             pwd=f'Senha@{randint(1000,9999)}'
             command=f'dsmod user "{DN}" -pwd "{pwd}" -mustchpwd no'
             a='passa sem shell'
             if shell:
                 a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            if a=='':
-                b='erro no formato da senha'
-                self.conn.delete(DN)
-                r=False
-        self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
-        texto= open(boasvinda,encoding=encode).read()
-        msg=Template(texto).render(nome=nome, login=login, pwd=pwd)
-        enviar_email(dados.get('email2'),'Senha de acesso',msg)
+            self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
+            texto= open(boasvinda,encoding=encode).read()
+            msg=Template(texto).render(nome=nome, login=login, pwd=pwd)
+            enviar_email(dados.get('email2'),'Senha de acesso',msg)
         return {'response':r,'mensg':b,'login':c}
     
     def rm_user(self,dados):

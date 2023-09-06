@@ -12,8 +12,9 @@ conf=loads(open('config.ini').read())
 email=conf['conf_email']['EMAIL']
 pwd=conf['conf_email']['KEY_APP']
 roda_pe=conf['conf_email']['FILE_RODAPE']
+encode=conf.get('conf_email').get('ENCODE')
 
-roda_pe=open(roda_pe,encoding='iso8859-1').read()
+roda_pe=open(roda_pe,encoding=encode).read()
 
 hora=datetime.now().strftime("%H:%M  %d/%m/%Y")
 
