@@ -99,7 +99,8 @@ li {
         
         '/$chave/login/login':{
             'meth':"'POST' ( RAW -> json) {'user':str-> $login_do_usuario , 'pwd':str-> $senha}",
-            'out':"'json' -> {'DN':str , 'cpf':str , 'givenname':str , 'mail':str , 'mail2':str , 'memberof':list , 'sAMAccountName':str , 'telefone':str , 'token':str , 'user':str}",
+            'out':"'json' -> {'DN':str , 'cpf':str , 'givenname':str , 'mail':str , 'mail2':str , 'memberof':list , 'sAMAccountName':str , 'telefone':str , 'token':str , <br>
+                             'user':str , 'nascido':str}",
             'msg':"Rota para login de usuario <br>
             A saída é os dados do usuario incluindo o tokem de altenticação, a cada login um novo token aleatorio é gerado.<br>
             O tokem pode ser guardado em Cookie de forma simples e deve ser enviado para API como 'Bearer' (tokem de head)"},
@@ -114,7 +115,8 @@ li {
             'meth':"'GET' ( get -> keys) {'chr':str , 'pag':int ,'qp':int}",
             'out':"'json' -> {'atual_pg':int , 'total_pg':int , 'users':list*} <br>
                 -> list* -> [dict*]<br>
-                -> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telefone':str-> telefone ,'info':str -> criador , <br> 'login':str , 'estado':bool -> ativado , 'DN':str-> nomeDistinto}",
+                -> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telefone':str-> telefone ,'info':str -> criador , <br> 
+                            'login':str , 'estado':bool -> ativado , 'DN':str-> nomeDistinto , 'nascido':str}",
             'msg':"Rota para buscar usuarios <br>
                 Para fazer buscar o usuario deve ser autorizado a essa função.<br>
                 chr -> caractere ou nome a ser buscado (cn).<br>

@@ -24,7 +24,7 @@ confirmaremail=conf.get('conf_email').get('CONFIRMAREMAIL')
 encode=conf.get('conf_email').get('ENCODE')
 
 
-attributes=['cn','sAMAccountName','distinguishedName','memberof','telephonenumber',
+attributes=['cn','sAMAccountName','distinguishedName','memberof','telephonenumber','comment',
             'mail','givenname','info','division','userAccountControl']
 
 
@@ -72,7 +72,8 @@ class user_ldap:
                         'DN': f'{i.distinguishedName}',
                         'telefone':f'{i.telephonenumber}',
                         'info':f'{i.info}',
-                        'cpf':f'{i.division}'}
+                        'cpf':f'{i.division}',
+                        'nascido':f'{i.comment}'}
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20):
@@ -107,7 +108,8 @@ class user_ldap:
                         'info':f'{i.info}',
                         'login':f'{i.sAMAccountName}',
                         'estado':i.userAccountControl.value & 2 != 2,
-                        'cpf':f'{i.division}'})
+                        'cpf':f'{i.division}',
+                        'nascido':f'{i.comment}'})
         return dados
 
     def validar_objeto(self,attr,valor):

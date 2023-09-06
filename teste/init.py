@@ -17,9 +17,9 @@ import requests
 login_app=True             #para testar o login na API
 login_logout_user=True     #para testar o login do user
 teste_de_alter_dados=False  #para testar modificar email2 e telefone
-pesquisar_usuario=False     #para testar pesquisar por usuarios
+pesquisar_usuario=True     #para testar pesquisar por usuarios
 pesquisar_grupos=False      #para testar pesquisar por grupos
-add_rm_usuario=True        #para testar criar e pagar usuario
+add_rm_usuario=False        #para testar criar e pagar usuario
 add_rm_grupo=False          #para testar criar e apagar grupo
 senha_self=False            #para testar trocar senha do proprio usuario
 senha_users=False            #para testar trocar a senha de outros usuarios
