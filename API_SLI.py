@@ -6,6 +6,7 @@ from flask_cors import CORS
 from functools import wraps
 from hashlib import sha256
 from threading import Thread
+from jinja2 import Template
 
 import json
 import logging
@@ -21,6 +22,7 @@ logs=conf.get('testes').get('LOGS')
 liberado=conf.get('testes').get('LIBERADO')
 val_tokem=conf.get('testes').get('VAL_TOKEM')
 flag=conf.get('init').get('FLAG')
+encode=conf.get('conf_email').get('ENCODE')
 hora,minuto=[int(i) for i in conf.get('init').get('HORA').split(':')]
 
 
@@ -38,6 +40,7 @@ def logon(dados):
     user_l=user_ldap(user,pwd)
     if user_l.connetc():
         ldap_usrs[user]=user_l
+        user_l.log_login()
         return user_l.my_dados()
     else: return {'resmpose':False,'mensg':'usuario ou senha incorreto'} 
 
@@ -200,7 +203,9 @@ def main():
 
     @app.route('/doc')   ## --> documentação da API
     def doc():
-        return render_template('doc.html')
+        doc=Template(open('./templates/doc.html',encoding=encode).read()).render()
+        return doc
+    
     app.run(host=host,port=port)
 
 ######### app   ----------------------  ######

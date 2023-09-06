@@ -21,6 +21,7 @@ shell=conf.get('testes').get('SHELL')
 grupos=conf.get('DN_grupos')
 boasvinda=conf.get('conf_email').get('BOASVINDA')
 confirmaremail=conf.get('conf_email').get('CONFIRMAREMAIL')
+encode=conf.get('conf_email').get('ENCODE')
 
 
 attributes=['cn','sAMAccountName','distinguishedName','memberof','telephonenumber',
@@ -170,7 +171,7 @@ class user_ldap:
                 self.conn.delete(DN)
                 r=False
         self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
-        texto= open(boasvinda,encoding='iso8859-1').read()
+        texto= open(boasvinda,encoding=encode).read()
         msg=Template(texto).render(nome=nome, login=login, pwd=pwd)
         enviar_email(dados.get('email2'),'Senha de acesso',msg)
         return {'response':r,'mensg':b,'login':c}
@@ -285,7 +286,7 @@ class user_ldap:
                 return {'response':False, 'mensg':f'a email não pode ser de {dominio}'}
             if not token:
                 self.codigo=f'UFNT-{randint(100,999)}'
-                texto=open(confirmaremail,encoding='iso8859-1').read()
+                texto=open(confirmaremail,encoding=encode).read()
                 msg=Template(texto).render(nome=self.all_dados['user'],codigo=self.codigo)
                 enviar_email(email,'validar email',msg)
                 return {'response':True, 'mensg':f'verificar {email}'}
