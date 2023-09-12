@@ -3,6 +3,7 @@ login
 build
 dist
 teste
+templates/usb.png
 __pycache__
 
 api_icon.ico
@@ -11,3 +12,4 @@ json_teste.py
 teste.py
 
 *.spec
+
