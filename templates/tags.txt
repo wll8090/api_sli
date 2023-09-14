@@ -1,0 +1,18 @@
+{nome} = nome completo de terceiros
+{nome1} = primeiro nome de terceiros
+{login} =  login de terceiro
+{logon} = login completo de terceiro
+{pwd} = senha gerada para novo usuario
+
+{codigo} = codigo para confirmação de email
+
+{nome_self} = nome proprio completo
+{nome_self1} = primeiro nome proprio completo
+{login_self} = login proprio
+{logon_self} = login completo
+
+
+{data} =  data atual  dd/mm/yyyy
+{hora} = hora atual HH:MM   24h
+{mes} = nome do mes
+{semana} = nome do sia da semana

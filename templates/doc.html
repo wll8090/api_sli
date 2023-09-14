@@ -115,7 +115,7 @@ li {
             'meth':"'GET' ( get -> keys) {'chr':str , 'pag':int ,'qp':int}",
             'out':"'json' -> {'atual_pg':int , 'total_pg':int , 'users':list*} <br>
                 -> list* -> [dict*]<br>
-                -> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':list-> grupos , 'telefone':str-> telefone ,'info':str -> criador , <br> 
+                -> dict* -> {'cn':str-> nome , 'givenname':str-> login , 'mail':str-> email , 'memberof':json-> {'nomeGP':'DN_GP'} , 'telefone':str-> telefone ,'info':str -> criador , <br> 
                             'login':str , 'estado':bool -> ativado , 'DN':str-> nomeDistinto , 'nascido':str}",
             'msg':"Rota para buscar usuarios <br>
                 Para fazer buscar o usuario deve ser autorizado a essa função.<br>
@@ -125,12 +125,13 @@ li {
                 A saída inclui o numero da página e a quantidade."},
             
         '/$chave/$user/add_user':{
-            'meth':"'POST' ( raw -> keys) {'nome':str , 'email2':str , 'desc':str , 'cpf':str , 'nescido':str , 'telefone':str}",
+            'meth':"'POST' ( raw -> keys) {'nome':str , 'email2':str , 'desc':str , 'cpf':str , 'nescido':str , 'telefone':str , /'poder'*: str}",
             'out':"'json' -> {'response':bool , 'login':str , 'mensg':str}",
             'msg':"Rota para criar usuario.<br>
             'response' : se foi criado.<br>
             'mensg' : varia de acordo com o ocorrido ['usuario criado' , 'usuario ja existe' , 'login ja existe'],<br>
             'login' : mostra o login criado para o usuario,<br>
+            /'poder'* : apenas para ROOT  str deve ser ['root', 'add_aluno', 'add_servidor', 'aluno', 'servidor']<br>
             Um email será diparado para o usuario criado com as suas informações."},
         
         '/$chave/$user/delete_user':{
@@ -160,7 +161,7 @@ li {
                 dec -> para descrição do grupo"},
 
         '/$chave/$user/modify_group':{
-            'meth':"'POST' ( raw -> keys) {'user':str , 'DN_group':str , 'modify': str -> 'add' | 'remove'}",
+            'meth':"'POST' ( raw -> keys) {'DN_user':str , 'DN_group':str , 'modify': str -> 'add' | 'remove'}",
             'out':"'json' -> {'response':bool , 'mensg':str}",
             'msg':"Rota para adicionar e remover membro de grupos. <br>
                 'add' -> adicionar um usuario. <br>

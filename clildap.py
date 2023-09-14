@@ -32,6 +32,14 @@ attributes=['cn','sAMAccountName','distinguishedName','memberof','telephonenumbe
 def valid(dd):
     return f'{dd}'.replace("[]",'')
 
+def config_group(membro):
+    membro={'a':membro}
+    [membro.update({'a':membro['a'].replace(i,'')}) for i in "'[]"]
+    membro['a']=membro['a'].split(', ')
+    membro={i.split(',')[0][3:].upper():i for i in membro['a']}
+    return membro
+
+
 
 class user_ldap:
     def __init__(self,user,pwd):
@@ -60,33 +68,22 @@ class user_ldap:
         return {'response':True,'mensg':'deslog'}
     
     def my_dados(self):
-        self.conn.search(f'{base}', f'(&(objectclass=user)(sAMAccountName={self.user}))' , attributes=attributes , search_scope=SUBTREE)
-        i=self.conn.entries[0]
-        self.all_dados={'user':valid(f'{i.cn}'),
-                        'givenname': valid(f'{i.givenname}'),
-                        'memberof': valid(f'{i.memberof}'),
-                        'sAMAccountName': valid(f'{i.sAMAccountName}'),
-                        'mail2': valid(f'{i.mail}'),
-                        'mail': valid(f'{i.sAMAccountName}')+dominio,
-                        'token':self.userID,
-                        'DN': f'{i.distinguishedName}',
-                        'telefone':f'{i.telephonenumber}',
-                        'info':f'{i.info}',
-                        'cpf':f'{i.division}',
-                        'nascido':f'{i.comment}'}
+        dados=self.consulta('aaa',2,my=True)
+        self.all_dados=dados['users001'][0]
+        self.all_dados['token']=self.userID
         return self.all_dados
     
-    def consulta(self,nome,quant_pag=20):
-        text=f'(&(objectclass=user)(cn={nome}*))'
-        
-        if "CN=root,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
-            pass
-        elif "CN=add_aluno,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
-            text=text.replace('*))',f"*)(memberof={grupos['ALUNO']}))")
-        elif "CN=add_servidor,CN=Users,DC=ufnt,DC=local" in self.all_dados['memberof']:
-            text=text.replace('*))',f"*)(memberof={grupos['SERVIDOR']}))")
+    def consulta(self,nome,quant_pag=20,my=False):
+        if not my:
+            text=f'(&(objectclass=user)(cn={nome}*))'
+            if 'ADD_ALUNO' in self.all_dados['memberof']:
+                text=text.replace('*))',f"*)(memberof={grupos['ALUNO']}))")
+            elif 'ADD_SERVIDOR' in self.all_dados['memberof']:
+                text=text.replace('*))',f"*)(memberof={grupos['SERVIDOR']}))")
+            else:
+                return {'response':False,'mensg':'sem autorização'}
         else:
-            return {'response':False,'mensg':'sem autorização'}
+            text=f'(&(objectclass=user)(sAMAccountName={self.user}))'
         
         self.conn.search(base, text ,attributes=attributes)
         dados={}
@@ -99,7 +96,7 @@ class user_ldap:
                 cont+=1
             pag.append({'cn':f'{i.cn}'.replace("[]",''),
                         'givenname': f'{i.givenname}'.replace("[]",''),
-                        'memberof': f'{i.memberof}'.replace("[]",''),
+                        'memberof': config_group(f'{i.memberof}'.replace("[]",'')),
                         'telefone': f'{i.telephonenumber}'.replace("[]",''),
                         'mail2': f'{i.mail}'.replace("[]",''),
                         'email':f'{i.sAMAccountName}{dominio}',
@@ -146,7 +143,7 @@ class user_ldap:
                 'givenName':l_nome[0],                          #primeiro nome
                 'sn':' '.join(l_nome[1:]),                      #sobre nome
                 'sAMAccountName':login,                         #login
-                'description':desc if desc else ' ',                #descrição da conta
+                'description':desc if desc else ' ',            #descrição da conta
                 'mail':email2,                                  #email segundario
                 'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
                 'userAccountControl':'66080',                   #estado da conta
@@ -154,12 +151,21 @@ class user_ldap:
                 'telephoneNumber':tell if tell else ' ',        #telefone
                 'division':dados.get('cpf')}                    #cpf
         
-        add_aluno =grupos.get("ADD_ALUNO") 
-        add_servidor =grupos.get("ADD_SERVIDOR") 
-        if add_aluno in self.all_dados['memberof']:
-            GP=grupos.get('ALUNO')
-        elif add_servidor in self.all_dados['memberof']:
+        poder_self=self.all_dados['memberof']
+        if 'ROOT' in poder_self:
+            teste_gp=dados.get('poder')
+            GP=teste_gp.upper() if  teste_gp else False         #'poder' de POST 
+            if not GP:
+                GP={'SERVIDOR':grupos.get('SERVIDOR')}
+            elif GP =='ALUNO':
+                GP={'ALUNO':grupos['ALUNO']}
+            else:
+                GP={GP:grupos[GP]}
+                GP['SERVIDOR']=grupos['SERVIDOR']
+        elif 'ADD_SERVIDOR' in poder_self:
             GP=grupos.get('SERVIDOR')
+        elif 'ADD_ALUNO' in poder_self:
+            GP=grupos.get('ALUNO')
         else:
             return {'response':False,'mensg':'sem autorização','login':'None'}
         r=self.conn.add(DN,attributes=attr)
@@ -172,12 +178,13 @@ class user_ldap:
             a='passa sem shell'
             if shell:
                 a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            self.modify_group({'DN_user':DN,'DN_group':GP,'modify':'add'})  # adiciona no grupo segundo o cargo
+            for i in GP:
+                self.modify_group({'DN_user':DN,'DN_group':GP[i],'modify':'add'})  # adiciona no grupo segundo o cargo
             texto= open(boasvinda,encoding=encode).read()
-            msg=Template(texto).render(nome=nome, login=login, pwd=pwd)
+            msg=self.formatar(texto,nome=nome, login=login, pwd=pwd)
             enviar_email(dados.get('email2'),'Senha de acesso',msg)
         return {'response':r,'mensg':b,'login':c}
-    
+        
     def rm_user(self,dados):
         DN=dados.get('DN')
         if DN==self.all_dados["DN"]:
@@ -278,18 +285,18 @@ class user_ldap:
         email=dados.get('email')
         token=dados.get('token')
         attr={}
-
         if tell:
             attr['telephoneNumber']=[(MODIFY_REPLACE,[tell])]
         if email:
             if email == self.all_dados.get('mail2'):
                 return {'response':False, 'mensg':'email é o mesmo'}
+            
             elif email.endswith(dominio):
                 return {'response':False, 'mensg':f'a email não pode ser de {dominio}'}
             if not token:
                 self.codigo=f'UFNT-{randint(100,999)}'
                 texto=open(confirmaremail,encoding=encode).read()
-                msg=Template(texto).render(nome=self.all_dados['user'],codigo=self.codigo)
+                msg=self.formatar(texto,codigo=self.codigo)
                 enviar_email(email,'validar email',msg)
                 return {'response':True, 'mensg':f'verificar {email}'}
             elif token !='teste.15975369874123658' and token != self.codigo :
@@ -300,3 +307,29 @@ class user_ldap:
             del self.codigo
             return {'response':True, 'mensg':'Dados atualizados'}
         return {'response':False, 'mensg':'erro'}
+
+    def formatar(self, texto,nome='',pwd='',codigo='',login=''):
+        free=datetime.now().strftime
+        nome1 = nome.split()[0] if nome else False
+        hora=free('%H:%M')
+        semana=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][int(free('%w'))]
+        mes=['Janeiro,', 'Fevereiro,', 'Março,', 'Abril,', 'Maio,', 'Junho,', 
+             'Julho,', 'Agosto,', 'Setembro,', 'Outubro,', 'Novembro,', 'Dezembro'][int(free('%m'))]
+        data=free('%d/%m/%Y')
+
+        return texto.format(
+        nome = nome,
+        nome1 = nome1,
+        login = login,
+        logon = login+dominio if login else '',
+        pwd = pwd,
+        codigo = codigo,
+        nome_self = self.all_dados['cn'],
+        nome_self1 = self.all_dados['cn'].split()[0],
+        login_self = self.all_dados['login'],
+        logon_self = self.all_dados['login']+dominio,
+        data = data,
+        hora = hora,
+        semana = semana,
+        mes = mes
+        )

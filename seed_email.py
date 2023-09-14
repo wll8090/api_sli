@@ -16,16 +16,8 @@ encode=conf.get('conf_email').get('ENCODE')
 
 roda_pe=open(roda_pe,encoding=encode).read()
 
-hora=datetime.now().strftime("%H:%M  %d/%m/%Y")
 
-def enviar_email(destino,assunto,texto):
-
-    msg=MIMEMultipart()
-    msg['From']=email
-    msg['To']=destino
-    msg['Subject']=assunto
-
-    html=f'''
+html='''
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -34,7 +26,6 @@ def enviar_email(destino,assunto,texto):
     <div>
     {texto}
     </div>
-em: {hora}
 <br> <br> <br>
 {roda_pe}
 
@@ -42,7 +33,16 @@ em: {hora}
 </html>
     '''
 
-    msg.attach(MIMEText(html,'html', _charset='utf-8'))
+
+def enviar_email(destino,assunto,texto):
+    msg=MIMEMultipart()
+    msg['From']=email
+    msg['To']=destino
+    msg['Subject']=assunto
+
+    texto=html.format(texto=texto, roda_pe=roda_pe)
+
+    msg.attach(MIMEText(texto,'html', _charset='utf-8'))
     servidor=smtplib.SMTP(server,port)
     servidor.starttls()
     servidor.login(email,pwd)

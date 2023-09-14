@@ -14,22 +14,20 @@ import requests
 ##########################################################
 
 
-login_app=True             #para testar o login na API
-login_logout_user=True     #para testar o login do user
-teste_de_alter_dados=False  #para testar modificar email2 e telefone
-pesquisar_usuario=False     #para testar pesquisar por usuarios
-pesquisar_grupos=False      #para testar pesquisar por grupos
-add_rm_usuario=True        #para testar criar e pagar usuario
-add_rm_grupo=False          #para testar criar e apagar grupo
-senha_self=False            #para testar trocar senha do proprio usuario
-senha_users=False            #para testar trocar a senha de outros usuarios
-mecher_no_grupo=False       #para testar adicionar e remover usuarios de grupo
-
+login_app=1                 #para testar o login na API
+login_logout_user=1         #para testar o login do user
+teste_de_alter_dados=1      #para testar modificar email2 e telefone
+pesquisar_usuario=1         #para testar pesquisar por usuarios
+pesquisar_grupos=1          #para testar pesquisar por grupos
+add_rm_usuario=1            #para testar criar e pagar usuario
+add_rm_grupo=1              #para testar criar e apagar grupo
+senha_self=1                #para testar trocar senha do proprio usuario
+senha_users=1               #para testar trocar a senha de outros usuarios
+mecher_no_grupo=1           #para testar adicionar e remover usuarios de grupo
 
 
 login_app=login_app|login_logout_user|add_rm_usuario|add_rm_grupo|senha_self|senha_users|mecher_no_grupo|pesquisar_usuario|pesquisar_grupos
 login_logout_user=login_logout_user|add_rm_usuario|add_rm_grupo|senha_self|senha_users|mecher_no_grupo|pesquisar_usuario|pesquisar_grupos
-
 
 
 with open('./config.ini','r') as arq:
@@ -65,7 +63,6 @@ def decora(msg):
     return new_func
 
 
-
 def authenticar():
     assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
     dia=datetime.now().strftime(f"%d/%m-{flag}-%d/%m")
@@ -91,7 +88,7 @@ def teste_login_user(login):
     re=requests.post(rr,json=login).text
     print(re)
     re=loads(re)
-    return (re['sAMAccountName'] == login['user']) , 'passou!' , re
+    return (re['login'] == login['user']) , 'passou!' , re
 
 
 @decora('pesquisa de usuario&grupo')
@@ -129,12 +126,12 @@ if login_app:
     teste_init_api(dados)
 
 
-
 ##### login de usuario
 if login_logout_user:
     re,dados_user=teste_login_user(login)
+    print(dados_user)
     token=dados_user['token']
-    user=dados_user['sAMAccountName']
+    user=dados_user['login']
     head={"Authorization":f'Bearer {token}','Content-Type': 'application/json'}
 
 ##### pesquisar por grupos
@@ -150,7 +147,8 @@ if add_rm_usuario:
             'dd':{   "nome":nome,
                     "email2":"williams.ferreira@mail.uft.edu.br",
                     "desc":"usuario de teste",
-                    "cpf":"12345678909"}}
+                    "cpf":"12345678909",
+                    "poder":"root"}}
     teste_endpoint(dados)
 
 
@@ -158,13 +156,13 @@ if add_rm_usuario:
 if senha_users:
     dados={'end':'user_pwd',
         'dd':{   "DN":f"CN={nome},CN=Users,DC=ufnt,DC=local",
-                    "new_pwd":dados['dd']['pwd']}}
+                    "new_pwd":'@Aa1020'}}
     teste_endpoint(dados)
 
 
 ##### pesquisa de usuario
 if pesquisar_usuario:
-    pesquisar='users?chr=maria&pag=1&p=20'
+    pesquisar='users?chr=maria&pag=1&qp=20'
     teste_de_pesquisa('usuario')
 
 
@@ -206,8 +204,8 @@ if add_rm_usuario:
 ##### trocar a senha
 if senha_self:
     dados={'end':'reset_pwd',
-        'dd':{   "pwd":login['pwd'],
-                    "new_pwd":login['pwd']}}
+        'dd':{  "pwd":login['pwd'],
+                "new_pwd":login['pwd']}}
     teste_endpoint(dados)
 
 
