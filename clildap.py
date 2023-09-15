@@ -77,7 +77,9 @@ class user_ldap:
     def consulta(self,nome,quant_pag=20,my=False):
         if not my:
             text=f'(&(objectclass=user)(cn={nome}*))'
-            if 'ADD_ALUNO' in self.all_dados['memberof']:
+            if 'ROOT' in self.all_dados['memberof']:
+                pass
+            elif 'ADD_ALUNO' in self.all_dados['memberof']:
                 text=text.replace('*))',f"*)(memberof={grupos['ALUNO']}))")
             elif 'ADD_SERVIDOR' in self.all_dados['memberof']:
                 text=text.replace('*))',f"*)(memberof={grupos['SERVIDOR']}))")
