@@ -122,6 +122,7 @@ class user_ldap:
         email2=dados.get('email2')
         tell=f'{dados.get("telefone")}'
         desc = dados.get("desc")
+        nascido=dados.get('nascido')
         if email2.endswith(dominio):
             return {'response':False,'mensg':f'email secundario não pode ser de {dominio}'}
         fn=l_nome[0]
@@ -135,7 +136,6 @@ class user_ldap:
             login=login2
             if self.validar_objeto('sAMAccountName',login): #verificação de login2
                 return {'response':False,'mensg':'login ja existe','login':f'{login1} & {login2}'}
-
         DN=f"CN={nome},CN=Users,{base}"
         attr={  'objectclass':['top','person', 'organizationalPerson', 'user'],
                 'cn':nome,                                      #nome completo
@@ -151,7 +151,7 @@ class user_ldap:
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
                 'telephoneNumber':tell if tell else ' ',        #telefone
                 'division':dados.get('cpf'),                    #cpf
-                'comment':dados.get('nascido')}                 #data de nascimento  
+                'comment':nascido if nascido else ''}                 #data de nascimento  
         
         poder_self=self.all_dados['memberof']
         if 'ROOT' in poder_self:
@@ -165,11 +165,12 @@ class user_ldap:
                 GP={GP:grupos[GP]}
                 GP['SERVIDOR']=grupos['SERVIDOR']
         elif 'ADD_SERVIDOR' in poder_self:
-            GP=grupos.get('SERVIDOR')
+            GP={'SERVIDOR':grupos.get('SERVIDOR')}
         elif 'ADD_ALUNO' in poder_self:
-            GP=grupos.get('ALUNO')
+            GP={'ALUNO':grupos.get('ALUNO')}
         else:
             return {'response':False,'mensg':'sem autorização','login':'None'}
+
         r=self.conn.add(DN,attributes=attr)
         c=login
         b='erro ao criar usuario'
@@ -180,6 +181,7 @@ class user_ldap:
             a='passa sem shell'
             if shell:
                 a=sub.run(command,shell=1,capture_output=1,text=1).stdout
+            
             for i in GP:
                 self.modify_group({'DN_user':DN,'DN_group':GP[i],'modify':'add'})  # adiciona no grupo segundo o cargo
             texto= open(boasvinda,encoding=encode).read()
