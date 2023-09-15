@@ -7,6 +7,7 @@ from datetime import datetime
 from random import randint
 from seed_email import enviar_email
 from jinja2 import Template
+from unidecode import unidecode
 
 with open('config.ini') as arq:
     conf=loads(arq.read())
@@ -125,8 +126,8 @@ class user_ldap:
             return {'response':False,'mensg':f'email secundario não pode ser de {dominio}'}
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
-        login1=login=f'{fn}.{l_nome[-1]}'.lower()
-        login2=f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'.lower()
+        login1=login=unidecode(f'{fn}.{l_nome[-1]}'.lower())
+        login2=unidecode(f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'.lower())
 
         if self.validar_objeto('cn',nome):  #verificação de usuario
             return {'response':False,'mensg':'usuario ja existe','login':f'{login1}'}
@@ -149,7 +150,8 @@ class user_ldap:
                 'userAccountControl':'66080',                   #estado da conta
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
                 'telephoneNumber':tell if tell else ' ',        #telefone
-                'division':dados.get('cpf')}                    #cpf
+                'division':dados.get('cpf'),                    #cpf
+                'comment':dados.get('nascido')}                 #data de nascimento  
         
         poder_self=self.all_dados['memberof']
         if 'ROOT' in poder_self:
