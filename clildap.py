@@ -62,7 +62,7 @@ class user_ldap:
     def connetc(self):
         self.server=Server(host,get_info=ALL) 
         self.conn=Connection(self.server,self.logon,self.pwd)
-        return {'response':self.conn.bind()}
+        return self.conn.bind()
     
     def logout(self):
         self.conn.unbind()
