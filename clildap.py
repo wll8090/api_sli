@@ -47,8 +47,18 @@ class user_ldap:
         self.user=user
         self.logon=f'{user}{dominio}'
         self.pwd=pwd
+        self.token = False
         self.chave=f'{randint(0,33**333)}'
-        self.userID= sha256((user+self.chave).encode()).hexdigest() if val_tokem else tokem
+        
+    
+    def gerar_token(self, addr_ip, validar_token=False):
+        my_token= (self.user + self.chave + addr_ip) if not self.token else self.token
+        user_token= sha256((self.user+self.chave +addr_ip).encode()).hexdigest() if val_tokem else tokem
+        print(user_token)
+        if validar_token:
+            return validar_token==user_token
+        else:
+            return user_token
 
     
     def log_login(self):
@@ -68,10 +78,10 @@ class user_ldap:
         self.conn.unbind()
         return {'response':True,'mensg':'deslog'}
     
-    def my_dados(self):
+    def my_dados(self,addr_ip):
         dados=self.consulta('aaa',2,my=True)
         self.all_dados=dados['users001'][0]
-        self.all_dados['token']=self.userID
+        self.all_dados['token']=self.gerar_token(addr_ip)
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20,my=False):

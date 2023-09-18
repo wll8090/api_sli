@@ -33,7 +33,7 @@ api_assinada=False
 ## erro de tokem ou login
 msgerro={'response':'Tokenize error & user login'}
 
-def logon(dados):
+def logon(dados,addr_ip):
     global ldap_usrs
     user=dados['user']
     pwd=dados['pwd']
@@ -41,7 +41,7 @@ def logon(dados):
     if user_l.connetc():
         ldap_usrs[user]=user_l
         user_l.log_login()
-        return user_l.my_dados()
+        return user_l.my_dados(addr_ip)
     else: return {'resmpose':False,'mensg':'usuario ou senha incorreto'} 
 
 def assinar():
@@ -127,8 +127,9 @@ def rotas_fechadas(app):
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
             if user=='login':
-                re=logon(dados)
-            elif acao=='add_user':                        #adiniona novo usuario
+                ip='10.10.10.10'
+                re=logon(dados,ip)
+            elif acao=='add_user':                      #adiniona novo usuario
                 re=ldap_usrs[user].adduser(dados)
             elif acao == 'add_group':                   #adiciona novo grupo 
                 re=ldap_usrs[user].creat_group(dados)

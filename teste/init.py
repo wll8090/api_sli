@@ -226,3 +226,5 @@ if teste_de_alter_dados:
 ###### logout de ususario
 if login_logout_user:
     teste_de_deslog_de_usuario('logout')
+
+
