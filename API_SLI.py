@@ -40,8 +40,9 @@ def logon(dados,addr_ip):
     user_l=user_ldap(user,pwd)
     if user_l.connetc():
         ldap_usrs[user]=user_l
-        user_l.log_login()
-        return user_l.my_dados(addr_ip)
+        user_l.log_login(addr_ip)
+        dd=user_l.my_dados(addr_ip)
+        return dd
     else: return {'resmpose':False,'mensg':'usuario ou senha incorreto'} 
 
 def assinar():
@@ -99,7 +100,7 @@ def rotas_fechadas(app):
 
     @app.route('/<rota_seg>/<user>/<acao>',methods=['GET','POST'])
     def rotasocultas(rota_seg,user,acao):
-
+        addr_ip= request.remote_addr
         if not api_assinada or rota_seg != seg:
             return erro404()
         if user != 'login':
@@ -108,7 +109,7 @@ def rotas_fechadas(app):
             bearer=tokem.get('Bearer')
             if user not in ldap_usrs or not bearer:
                 return jsonify(msgerro)
-            if ldap_usrs[user].userID !=bearer:
+            if ldap_usrs[user].user_token(addr_ip) != bearer:
                 return jsonify(msgerro)
 
         re='nada'
@@ -127,8 +128,7 @@ def rotas_fechadas(app):
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
             if user=='login':
-                ip='10.10.10.10'
-                re=logon(dados,ip)
+                re=logon(dados,addr_ip)
             elif acao=='add_user':                      #adiniona novo usuario
                 re=ldap_usrs[user].adduser(dados)
             elif acao == 'add_group':                   #adiciona novo grupo 
@@ -185,6 +185,7 @@ def main():
     if logs:
         @app.route('/log')
         def log():
+            ip=request.remote_addr
             assina=datetime.now().strftime("%d/%m-assinado-%d/%m")
             dia=datetime.now().strftime(f"%d/%m-{flag}-%d/%m")
             cript=sha256(dia.encode('utf8')).hexdigest()
@@ -193,12 +194,13 @@ def main():
                 cript='0f7b8c3893290e18eaec7c09d7d794d13a83b79ab68bc3a5c228650ee87ff85f'
             assinado=sha256((cript+assina).encode('utf8')).hexdigest()
             seg=assinado[-20:-10]
+            all_user={i:ldap_usrs[i].user_token(ip) for i in ldap_usrs}
             texte=open(f'logs/erro_{data}.log').read()
             return f'''get: {cript} <br>
             assinado: {assinado} <br>
             rota :{seg}
             <hr> 
-            ldap_users: {ldap_usrs}<hr>
+            ldap_users: {all_user}<hr>
             rotas: {app.view_functions} <hr>
             {texte}'''
 

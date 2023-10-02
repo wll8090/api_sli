@@ -1,5 +1,5 @@
-from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
 import subprocess as sub
+from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
 from hashlib import sha256
 from random import randint
 from json import loads
@@ -8,6 +8,7 @@ from random import randint
 from seed_email import enviar_email
 from jinja2 import Template
 from unidecode import unidecode
+from threading import Thread
 
 with open('config.ini') as arq:
     conf=loads(arq.read())
@@ -23,12 +24,13 @@ grupos=conf.get('DN_grupos')
 boasvinda=conf.get('conf_email').get('BOASVINDA')
 confirmaremail=conf.get('conf_email').get('CONFIRMAREMAIL')
 encode=conf.get('conf_email').get('ENCODE')
+base_email=conf.get('conf_email').get('BASE')
 
 
 attributes=['cn','sAMAccountName','distinguishedName','memberof','telephonenumber','comment',
-            'mail','givenname','info','division','userAccountControl']
+            'mail','givenname','info','division','userAccountControl','adminDisplayName']
 
-
+server=Server(host,get_info=ALL)
 
 def valid(dd):
     return f'{dd}'.replace("[]",'')
@@ -47,31 +49,24 @@ class user_ldap:
         self.user=user
         self.logon=f'{user}{dominio}'
         self.pwd=pwd
-        self.token = False
         self.chave=f'{randint(0,33**333)}'
         
     
-    def gerar_token(self, addr_ip, validar_token=False):
-        my_token= (self.user + self.chave + addr_ip) if not self.token else self.token
+    def user_token(self, addr_ip):
         user_token= sha256((self.user+self.chave +addr_ip).encode()).hexdigest() if val_tokem else tokem
-        print(user_token)
-        if validar_token:
-            return validar_token==user_token
-        else:
-            return user_token
+        return user_token
 
     
-    def log_login(self):
+    def log_login(self,addr_ip):
         data=datetime.now().strftime("%d_%m_%Y")
         hora=datetime.now().strftime("%H:%M")
         with open(f'./login/login_{data}.log','a') as arq:
-            texto=f'''"{self.user}" acesso em {hora}\n'''
+            texto=f'''/user: {self.user: <22}/ip: {addr_ip: <18}/as: {hora}\n'''
             arq.write(texto)
             arq.close()
 
-    def connetc(self):
-        self.server=Server(host,get_info=ALL) 
-        self.conn=Connection(self.server,self.logon,self.pwd)
+    def connetc(self): 
+        self.conn=Connection(server,self.logon,self.pwd)
         return self.conn.bind()
     
     def logout(self):
@@ -81,7 +76,7 @@ class user_ldap:
     def my_dados(self,addr_ip):
         dados=self.consulta('aaa',2,my=True)
         self.all_dados=dados['users001'][0]
-        self.all_dados['token']=self.gerar_token(addr_ip)
+        self.all_dados['token']=self.user_token(addr_ip)
         return self.all_dados
     
     def consulta(self,nome,quant_pag=20,my=False):
@@ -97,7 +92,6 @@ class user_ldap:
                 return {'response':False,'mensg':'sem autorização'}
         else:
             text=f'(&(objectclass=user)(sAMAccountName={self.user}))'
-        
         self.conn.search(base, text ,attributes=attributes)
         dados={}
         cont=1
@@ -111,8 +105,9 @@ class user_ldap:
                         'givenname': f'{i.givenname}'.replace("[]",''),
                         'memberof': config_group(f'{i.memberof}'.replace("[]",'')),
                         'telefone': f'{i.telephonenumber}'.replace("[]",''),
-                        'mail2': f'{i.mail}'.replace("[]",''),
-                        'email':f'{i.sAMAccountName}{dominio}',
+                        'email': f'{i.mail}'.replace("[]",''),
+                        'mail2': f'{i.adminDisplayName}'.replace("[]",''),
+                        #'email':f'{i.sAMAccountName}{dominio}',
                         'givenname': f'{i.givenname}'.replace("[]",''),
                         'DN': f'{i.distinguishedName}',
                         'info':f'{i.info}',
@@ -135,21 +130,22 @@ class user_ldap:
         tell=f'{dados.get("telefone")}'
         desc = dados.get("desc")
         nascido=dados.get('nascido')
-        if email2.endswith(dominio):
-            return {'response':False,'mensg':f'email secundario não pode ser de {dominio}'}
+        cpf=dados.get('cpf')
+        if email2.endswith(base_email):
+            return {'response':False,'mensg':f'email secundario não pode ser de {base_email}'}
         fn=l_nome[0]
         ln=' '.join(l_nome[1:])
         login1=login=unidecode(f'{fn}.{l_nome[-1]}'.lower())
         login2=unidecode(f'{fn}.{[l_nome[-3],l_nome[-2]][len(l_nome[-2])>2]}'.lower())
 
-        if self.validar_objeto('cn',nome):  #verificação de usuario
-            return {'response':False,'mensg':'usuario ja existe','login':f'{login1}'}
+        if self.validar_objeto('division',cpf):  #verificação de PCF usuario  campo "division"
+            return {'response':False,'mensg':'CPF já consta na base','login':f'{login1}'}
         if self.validar_objeto('sAMAccountName',login):  #verificação de login1
             login=login2
             if self.validar_objeto('sAMAccountName',login): #verificação de login2
                 return {'response':False,'mensg':'login ja existe','login':f'{login1} & {login2}'}
         DN=f"CN={nome},CN=Users,{base}"
-        attr={  'objectclass':['top','person', 'organizationalPerson', 'user'],
+        attr={ 'objectclass':['top','person', 'organizationalPerson', 'user'],
                 'cn':nome,                                      #nome completo
                 'displayname':nome,                             #nome completo
                 'uid':login,                                    #idetificador unico
@@ -157,13 +153,14 @@ class user_ldap:
                 'sn':' '.join(l_nome[1:]),                      #sobre nome
                 'sAMAccountName':login,                         #login
                 'description':desc if desc else ' ',            #descrição da conta
-                'mail':email2,                                  #email segundario
-                'userPrincipalName':f'{login}{dominio}',        #email de login do ldap
-                'userAccountControl':'66080',                   #estado da conta
+                'email':f'{login}{base_email}',                 #email p/ simcronizar com google   @ufnt.edu.br
+                'adminDisplayName':email2,                      #email segundario
+                'userPrincipalName': f'{login}{dominio}',       #email de login do ldap
+                'userAccountControl':'66080',                   #estado da conta   : senha nunca expira
                 'info':f"criador: {self.all_dados['DN']}",      #informação do criador
                 'telephoneNumber':tell if tell else ' ',        #telefone
-                'division':dados.get('cpf'),                    #cpf
-                'comment':nascido if nascido else ''}                 #data de nascimento  
+                'division':cpf,                                 #cpf
+                'comment':nascido if nascido else ''}           #data de nascimento  
         
         poder_self=self.all_dados['memberof']
         if 'ROOT' in poder_self:
@@ -198,7 +195,8 @@ class user_ldap:
                 self.modify_group({'DN_user':DN,'DN_group':GP[i],'modify':'add'})  # adiciona no grupo segundo o cargo
             texto= open(boasvinda,encoding=encode).read()
             msg=self.formatar(texto,nome=nome, login=login, pwd=pwd)
-            enviar_email(dados.get('email2'),'Senha de acesso',msg)
+            th0=Thread(target=enviar_email, args=(dados.get('email2'),'Senha de acesso',msg))
+            th0.start()
         return {'response':r,'mensg':b,'login':c}
         
     def rm_user(self,dados):
@@ -284,7 +282,7 @@ class user_ldap:
         pwd=dados['pwd']
         new_pwd=dados['new_pwd']
         DN=self.all_dados['DN']
-        con=Connection(self.server,self.logon,pwd)
+        con=Connection(server,self.logon,pwd)
         if not con.bind(): 
             return {'response':False , 'mensg':'senha antiga invalida'}
         return self.exec_pwd(DN,new_pwd)
@@ -313,7 +311,8 @@ class user_ldap:
                 self.codigo=f'UFNT-{randint(100,999)}'
                 texto=open(confirmaremail,encoding=encode).read()
                 msg=self.formatar(texto,codigo=self.codigo)
-                enviar_email(email,'validar email',msg)
+                th0=Thread(target=enviar_email, args=(email,'validar email',msg))
+                th0.start()
                 return {'response':True, 'mensg':f'verificar {email}'}
             elif token !='teste.15975369874123658' and token != self.codigo :
                 return {'response':False, 'mensg':f'codigo invalido'}
@@ -330,7 +329,7 @@ class user_ldap:
         hora=free('%H:%M')
         semana=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][int(free('%w'))]
         mes=['Janeiro,', 'Fevereiro,', 'Março,', 'Abril,', 'Maio,', 'Junho,', 
-             'Julho,', 'Agosto,', 'Setembro,', 'Outubro,', 'Novembro,', 'Dezembro'][int(free('%m'))]
+             'Julho,', 'Agosto,', 'Setembro,', 'Outubro,', 'Novembro,', 'Dezembro'][int(free('%m'))-1]
         data=free('%d/%m/%Y')
 
         return texto.format(
