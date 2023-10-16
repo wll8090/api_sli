@@ -13,3 +13,5 @@ teste.py
 
 *.spec
 
+.gitgnore
+

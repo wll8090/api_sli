@@ -15,4 +15,4 @@
 {data} =  data atual  dd/mm/yyyy
 {hora} = hora atual HH:MM   24h
 {mes} = nome do mes
-{semana} = nome do sia da semana
+{semana} = nome do dia da semana

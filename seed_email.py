@@ -21,7 +21,7 @@ html='''
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8"></head>
+    <meta charset="{encode}"></head>
 <body>
     <div>
     {texto}
@@ -40,9 +40,9 @@ def enviar_email(destino,assunto,texto):
     msg['To']=destino
     msg['Subject']=assunto
 
-    texto=html.format(texto=texto, roda_pe=roda_pe)
+    texto=html.format(texto=texto, roda_pe=roda_pe,encode=encode)
 
-    msg.attach(MIMEText(texto,'html', _charset='utf-8'))
+    msg.attach(MIMEText(texto,'html', _charset=encode))
     servidor=smtplib.SMTP(server,port)
     servidor.starttls()
     servidor.login(email,pwd)

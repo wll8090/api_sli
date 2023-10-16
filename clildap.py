@@ -23,6 +23,7 @@ shell=conf.get('testes').get('SHELL')
 grupos=conf.get('DN_grupos')
 boasvinda=conf.get('conf_email').get('BOASVINDA')
 confirmaremail=conf.get('conf_email').get('CONFIRMAREMAIL')
+email_esqueci_senha=conf.get('conf_email').get('ESQUECI_SENHA')
 encode=conf.get('conf_email').get('ENCODE')
 base_email=conf.get('conf_email').get('BASE')
 
@@ -42,14 +43,15 @@ def config_group(membro):
     membro={i.split(',')[0][3:].upper():i for i in membro['a']}
     return membro
 
-
-
 class user_ldap:
     def __init__(self,user,pwd):
+        global root
         self.user=user
         self.logon=f'{user}{dominio}'
         self.pwd=pwd
         self.chave=f'{randint(0,33**333)}'
+        if user == 'user.root':
+            globals()['root']=[user,pwd]
         
     
     def user_token(self, addr_ip):
@@ -153,7 +155,7 @@ class user_ldap:
                 'sn':' '.join(l_nome[1:]),                      #sobre nome
                 'sAMAccountName':login,                         #login
                 'description':desc if desc else ' ',            #descrição da conta
-                'email':f'{login}{base_email}',                 #email p/ simcronizar com google   @ufnt.edu.br
+                'mail':f'{login}{base_email}',                 #email p/ simcronizar com google   @ufnt.edu.br
                 'adminDisplayName':email2,                      #email segundario
                 'userPrincipalName': f'{login}{dominio}',       #email de login do ldap
                 'userAccountControl':'66080',                   #estado da conta   : senha nunca expira
@@ -194,7 +196,7 @@ class user_ldap:
             for i in GP:
                 self.modify_group({'DN_user':DN,'DN_group':GP[i],'modify':'add'})  # adiciona no grupo segundo o cargo
             texto= open(boasvinda,encoding=encode).read()
-            msg=self.formatar(texto,nome=nome, login=login, pwd=pwd)
+            msg=formatar(texto,nome=nome, login=login, pwd=pwd,self=self)
             th0=Thread(target=enviar_email, args=(dados.get('email2'),'Senha de acesso',msg))
             th0.start()
         return {'response':r,'mensg':b,'login':c}
@@ -310,7 +312,7 @@ class user_ldap:
             if not token:
                 self.codigo=f'UFNT-{randint(100,999)}'
                 texto=open(confirmaremail,encoding=encode).read()
-                msg=self.formatar(texto,codigo=self.codigo)
+                msg=formatar(texto,codigo=self.codigo,self=self)
                 th0=Thread(target=enviar_email, args=(email,'validar email',msg))
                 th0.start()
                 return {'response':True, 'mensg':f'verificar {email}'}
@@ -323,28 +325,79 @@ class user_ldap:
             return {'response':True, 'mensg':'Dados atualizados'}
         return {'response':False, 'mensg':'erro'}
 
-    def formatar(self, texto,nome='',pwd='',codigo='',login=''):
-        free=datetime.now().strftime
-        nome1 = nome.split()[0] if nome else False
-        hora=free('%H:%M')
-        semana=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][int(free('%w'))]
-        mes=['Janeiro,', 'Fevereiro,', 'Março,', 'Abril,', 'Maio,', 'Junho,', 
-             'Julho,', 'Agosto,', 'Setembro,', 'Outubro,', 'Novembro,', 'Dezembro'][int(free('%m'))-1]
-        data=free('%d/%m/%Y')
 
-        return texto.format(
-        nome = nome,
-        nome1 = nome1,
-        login = login,
-        logon = login+dominio if login else '',
-        pwd = pwd,
-        codigo = codigo,
-        nome_self = self.all_dados['cn'],
-        nome_self1 = self.all_dados['cn'].split()[0],
-        login_self = self.all_dados['login'],
-        logon_self = self.all_dados['login']+dominio,
-        data = data,
-        hora = hora,
-        semana = semana,
-        mes = mes
-        )
+
+
+def formatar(texto,nome='',pwd='',codigo='',login='', self=''):
+    free=datetime.now().strftime
+    nome1 = nome.split()[0] if nome else False
+    hora=free('%H:%M')
+    semana=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][int(free('%w'))]
+    mes=['Janeiro,', 'Fevereiro,', 'Março,', 'Abril,', 'Maio,', 'Junho,', 
+            'Julho,', 'Agosto,', 'Setembro,', 'Outubro,', 'Novembro,', 'Dezembro'][int(free('%m'))-1]
+    data=free('%d/%m/%Y')
+    if self:
+        l_self={'nome_self': self.all_dados.get('cn'),
+                'nome_self1': self.all_dados.get('cn').split()[0],
+                'login_self': self.all_dados.get('login'),
+                'logon_self': self.all_dados.get('login')+dominio
+                }
+    else: l_self={}
+
+    return texto.format(
+    nome = nome,
+    nome1 = nome1,
+    login = login,
+    logon = login+dominio if login else '',
+    pwd = pwd,
+    codigo = codigo,
+    data = data,
+    hora = hora,
+    semana = semana,
+    mes = mes,
+    **l_self
+    )
+
+def esqueci_senha(dados):
+    nome=dados['nome']
+    cpf=dados['cpf']
+    nascido=dados['nascido']
+    email=dados['email']
+    root=globals()['root']
+    root[0]=root[0]+dominio
+    user_root=Connection(server,*root)
+    if not user_root.bind():
+        return {'response':False , 'mensg':'erro no usuraio root'}
+    else:
+        filter=f'(&(objectclass=user)(division={cpf}))'
+        attr=['cn','comment','division','admindisplayname','distinguishedName']
+        user_root.search(base,filter,attributes=attr)
+        lista=user_root.entries
+        if lista:
+            user=lista[0]
+            print(user)
+            if user.comment == nascido:
+                if f'{user.cn}'.lower() == nome.lower():
+                    if f'{user.admindisplayname}'.lower() == email.lower():
+                        dn=user.distinguishedName
+                        new_pwd=f'Senha@{randint(1000,9999)}'
+                        command=f'dsmod user "{dn}" -pwd "{new_pwd}" -mustchpwd no'
+                        a='passa sem shell'
+                        if shell: 
+                            a=sub.run(command,shell=1,capture_output=1,text=1).stdout   #sobracreve a senha do usuario
+                            a=sub.run(command,shell=1,capture_output=1,text=1).stdout
+
+                        texto=open(email_esqueci_senha,encoding=encode).read()
+                        msg=formatar(texto,nome=nome, pwd=new_pwd)
+                        th0=Thread(target=enviar_email, args=(email,'validar email',msg))
+                        th0.start()
+                        return {'response':True, 'mensg':f'verificar {email}'}
+                        
+        else:
+            return {'response':False , 'mensg':'USER não encontrado'}
+            
+            
+            
+        
+    
+

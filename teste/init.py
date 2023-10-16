@@ -24,11 +24,11 @@ add_rm_grupo=1              #para testar criar e apagar grupo
 senha_self=1                #para testar trocar senha do proprio usuario
 senha_users=1               #para testar trocar a senha de outros usuarios
 mecher_no_grupo=1           #para testar adicionar e remover usuarios de grupo
+esqueci_senha=1             #para testar a rota de esqueci minha senha
 
 
 login_app=login_app|login_logout_user|add_rm_usuario|add_rm_grupo|senha_self|senha_users|mecher_no_grupo|pesquisar_usuario|pesquisar_grupos
 login_logout_user=login_logout_user|add_rm_usuario|add_rm_grupo|senha_self|senha_users|mecher_no_grupo|pesquisar_usuario|pesquisar_grupos
-
 
 with open('./config.ini','r') as arq:
     dados=loads(arq.read())
@@ -42,13 +42,16 @@ rota=f'http://{host}:{port}'
 
 login={"user":"user.root","pwd":"@Aa1020"}
 
+user=login['user']
+
+
 
 def decora(msg):
     def new_func(func):
-        def funcao(dados):
+        def funcao(dados,user=user):
             print(f'\n**** Teste de: {msg} ****')
             
-            re,ree,dados =func(dados)
+            re,ree,dados =func(dados,user)
             print(re,'---------------------')
             if  re:
                 print(f'OK:{ree}')
@@ -70,30 +73,29 @@ def authenticar():
     assinado=sha256((cript_dia+assina).encode('utf8')).hexdigest()
     rota=assinado[-20:-10]
     dd= {'assinado':assinado, 'cripto_do_dia':cript_dia,'rota':rota}
-    print(dd)
     return dd
 
 
 @decora('atenticação na api')
-def teste_init_api(dados):
+def teste_init_api(dados,user):
+    print('kkkkkkkkkkk')
     a=loads(requests.get(f'{rota}/login/{dados["cripto_do_dia"]}').text)
     re=a['signed']==dados['assinado']
     return re,'passou!', None
 
 @decora('login de usuario')
-def teste_login_user(login):
+def teste_login_user(login,user):
     print(chave)
     rr=f"{rota}/{chave}/login/swswsw"
     print(rr)
     re=requests.post(rr,json=login).text
     print(re)
     re=loads(re)
-    print(re)
     return (re['login'] == login['user']) , 'passou!' , re
 
 
 @decora('pesquisa de usuario&grupo')
-def teste_de_pesquisa(dados):
+def teste_de_pesquisa(dados,user):
     print(f'****{dados} --> {pesquisar}')
     r=f"{rota}/{chave}/{user}/{pesquisar}"
     re=loads(requests.get(r,headers=head).text)
@@ -101,15 +103,16 @@ def teste_de_pesquisa(dados):
     return re.get('atual_pg')==1, 'passou!', None
 
 @decora('logout de usuario')
-def teste_de_deslog_de_usuario(dados):
+def teste_de_deslog_de_usuario(dados,user):
     print(f'****{dados}')
     r=f"{rota}/{chave}/{user}/logout"
+    print(r)
     re=loads(requests.get(r,headers=head).text)
     return re['response'], 'passou!', None
 
 
 @decora('rota de endpoint')
-def teste_endpoint(dados):
+def teste_endpoint(dados, user):
     print(f'****-->{dados["end"]}')
     r=f"{rota}/{chave}/{user}/{dados['end']}"
     print(f'Em: {r}')
@@ -125,6 +128,8 @@ chave=dados['rota']
 ##### iniciação da API
 if login_app:
     teste_init_api(dados)
+
+
 
 
 ##### login de usuario
@@ -226,5 +231,16 @@ if teste_de_alter_dados:
 ###### logout de ususario
 if login_logout_user:
     teste_de_deslog_de_usuario('logout')
+
+
+###### teste de esqueci minha senha
+if esqueci_senha:
+    dados={'end':'esqueci_senha',
+        'dd':{'nome':'sérgio williams ferreira de sousa',
+              'nascido':'08/08/1995',
+              'email':'wllyvn@gmail.com',
+              'cpf':'123.456.789-09'}}
+    teste_endpoint(dados,'req_senha')
+
 
 

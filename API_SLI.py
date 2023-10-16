@@ -1,5 +1,5 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from clildap import user_ldap
+from clildap import user_ldap , esqueci_senha
 from datetime import datetime, timedelta
 from flask import Flask ,abort, jsonify, request, make_response,render_template
 from flask_cors import CORS
@@ -100,10 +100,12 @@ def rotas_fechadas(app):
 
     @app.route('/<rota_seg>/<user>/<acao>',methods=['GET','POST'])
     def rotasocultas(rota_seg,user,acao):
+        
+
         addr_ip= request.remote_addr
         if not api_assinada or rota_seg != seg:
             return erro404()
-        if user != 'login':
+        if user != 'login' and user != 'req_senha':
             tt=request.headers.get('Authorization')
             tokem=dict([tt.split(' ') if tt else ['a','b']])
             bearer=tokem.get('Bearer')
@@ -145,7 +147,11 @@ def rotas_fechadas(app):
                 re=ldap_usrs[user].user_senha(dados)
             elif acao == 'alter_count':                 #troca o telefone e email do self.usuario
                 re=ldap_usrs[user].modify_my_count(dados)
-    
+            if acao == 'esqueci_senha':               # rota para esqueci a senha
+                print('kkkkkkkk88888')
+                print(dados)
+                re=esqueci_senha(dados)
+                
         
         if re=='nada': return erro404()
         return jsonify(re)
@@ -156,9 +162,8 @@ def rotas_fechadas(app):
 def main():
     app=Flask(__name__)
 
-    @app.before_request
-    def before():
-        CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
+    
+    CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
 
     data=datetime.now().strftime('%d_%m_%Y')
     log_formatter = logging.Formatter('-'*100+'\n<hr>%(asctime)s - %(levelname)s - %(message)s -')

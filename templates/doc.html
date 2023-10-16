@@ -193,7 +193,12 @@ li {
             'msg':"Rota para mudar o telefone ou email do usuario. <br>
             'token' -> é enviado por email deve ser enviado em POST^2. <br>
             'tell' e 'email' são opcionais."},
-    }
+        
+        '/$chave/req_senha/esqueci_senha':{
+            'meth':"'POST' ( raw -> keys) {'nome':str , 'cpf':str , 'nascido':str , 'email':str}",
+            'out':"'json' -> {'response':bool , 'mensg':str}",
+            'msg':"Rota para esqueci minha senha de usuario." },
+}
     %}
 
     <div class="topo">
