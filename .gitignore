@@ -1,5 +1,5 @@
-logs
-login
+logs/*
+login/*
 build
 dist
 teste
