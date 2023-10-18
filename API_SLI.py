@@ -1,9 +1,8 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from clildap import user_ldap , esqueci_senha
-from datetime import datetime, timedelta
-from flask import Flask ,abort, jsonify, request, make_response,render_template
+from datetime import datetime
+from flask import Flask ,abort, jsonify, request
 from flask_cors import CORS
-from functools import wraps
 from hashlib import sha256
 from threading import Thread
 from jinja2 import Template

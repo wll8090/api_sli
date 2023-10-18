@@ -1,12 +1,11 @@
 import subprocess as sub
-from ldap3 import Server, Connection, ALL, SUBTREE , MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
+from ldap3 import Server, Connection, ALL, MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
 from hashlib import sha256
 from random import randint
 from json import loads
 from datetime import datetime
 from random import randint
 from seed_email import enviar_email
-from jinja2 import Template
 from unidecode import unidecode
 from threading import Thread
 
