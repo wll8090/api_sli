@@ -325,8 +325,6 @@ class user_ldap:
         return {'response':False, 'mensg':'erro'}
 
 
-
-
 def formatar(texto,nome='',pwd='',codigo='',login='', self=''):
     free=datetime.now().strftime
     nome1 = nome.split()[0] if nome else False
@@ -362,9 +360,10 @@ def esqueci_senha(dados):
     cpf=dados['cpf']
     nascido=dados['nascido']
     email=dados['email']
-    root=globals()['root']
-    root[0]=root[0]+dominio
-    user_root=Connection(server,*root)
+    root=globals().get('root')
+    if not root:
+        return {'response':False , 'mensg':'usuario principal não credenciado, aguarde uns minutos'}
+    user_root=Connection(server,root[0]+dominio, root[1])
     if not user_root.bind():
         return {'response':False , 'mensg':'erro no usuraio root'}
     else:
@@ -374,7 +373,6 @@ def esqueci_senha(dados):
         lista=user_root.entries
         if lista:
             user=lista[0]
-            print(user)
             if user.comment == nascido:
                 if f'{user.cn}'.lower() == nome.lower():
                     if f'{user.admindisplayname}'.lower() == email.lower():
@@ -385,15 +383,17 @@ def esqueci_senha(dados):
                         if shell: 
                             a=sub.run(command,shell=1,capture_output=1,text=1).stdout   #sobracreve a senha do usuario
                             a=sub.run(command,shell=1,capture_output=1,text=1).stdout
+                            if a=='':
+                                return {'response':False , 'mensg':'nova senha invalida'}
 
-                        texto=open(email_esqueci_senha,encoding=encode).read()
-                        msg=formatar(texto,nome=nome, pwd=new_pwd)
-                        th0=Thread(target=enviar_email, args=(email,'validar email',msg))
-                        th0.start()
-                        return {'response':True, 'mensg':f'verificar {email}'}
+                            texto=open(email_esqueci_senha,encoding=encode).read()
+                            msg=formatar(texto,nome=nome, pwd=new_pwd)
+                            th0=Thread(target=enviar_email, args=(email,'validar email',msg))
+                            th0.start()
+                            return {'response':True, 'mensg':f'verificar {email}'}
+                        return {'response':True, 'mensg':f'verificar {email} __test__'}
                         
-        else:
-            return {'response':False , 'mensg':'USER não encontrado'}
+        return {'response':False , 'mensg':'USER não encontrado'}
             
             
             

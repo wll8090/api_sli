@@ -15,7 +15,7 @@ import requests
 
 
 login_app=1                 #para testar o login na API
-login_logout_user=1         #para testar o login do user
+login_logout_user=0         #para testar o login do user
 teste_de_alter_dados=0      #para testar modificar email2 e telefone
 pesquisar_usuario=0         #para testar pesquisar por usuarios
 pesquisar_grupos=0          #para testar pesquisar por grupos
@@ -24,7 +24,7 @@ add_rm_grupo=0              #para testar criar e apagar grupo
 senha_self=0                #para testar trocar senha do proprio usuario
 senha_users=0               #para testar trocar a senha de outros usuarios
 mecher_no_grupo=0           #para testar adicionar e remover usuarios de grupo
-esqueci_senha=0             #para testar a rota de esqueci minha senha
+esqueci_senha=1             #para testar a rota de esqueci minha senha
 
 
 login_app=login_app|login_logout_user|add_rm_usuario|add_rm_grupo|senha_self|senha_users|mecher_no_grupo|pesquisar_usuario|pesquisar_grupos
@@ -37,6 +37,8 @@ with open('./config.ini','r') as arq:
 host=dados['init']['HOST']
 port=dados['init']['PORT']
 flag=dados['init']['FLAG']
+
+head={}
 
 rota=f'http://{host}:{port}'
 
@@ -78,7 +80,6 @@ def authenticar():
 
 @decora('atenticação na api')
 def teste_init_api(dados,user):
-    print('kkkkkkkkkkk')
     a=loads(requests.get(f'{rota}/login/{dados["cripto_do_dia"]}').text)
     re=a['signed']==dados['assinado']
     return re,'passou!', None

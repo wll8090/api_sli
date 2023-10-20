@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from clildap import user_ldap , esqueci_senha
 from datetime import datetime
 from flask import Flask ,abort, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin 
 from hashlib import sha256
 from threading import Thread
 from jinja2 import Template
@@ -98,6 +98,7 @@ def rotas_fechadas(app):
         return True
 
     @app.route('/<rota_seg>/<user>/<acao>',methods=['GET','POST'])
+    @cross_origin()
     def rotasocultas(rota_seg,user,acao):
         
 
@@ -161,7 +162,7 @@ def main():
     app=Flask(__name__)
 
     
-    CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
+    #CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
 
     data=datetime.now().strftime('%d_%m_%Y')
     log_formatter = logging.Formatter('-'*100+'\n<hr>%(asctime)s - %(levelname)s - %(message)s -')
@@ -175,8 +176,8 @@ def main():
     print(ipCORS)
 
     @app.route('/login/<chave>')      ## -->  loga na API
+    @cross_origin()
     def index(chave):
-        print('kkkkkkkkkkkkkk')
         global seg, api_assinada
         assinar()
         if chave==cript:
