@@ -128,6 +128,7 @@ def rotas_fechadas(app):
         
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
+            print(dados)
             if user=='login':
                 re=logon(dados,addr_ip)
             elif acao=='add_user':                      #adiniona novo usuario
@@ -147,8 +148,6 @@ def rotas_fechadas(app):
             elif acao == 'alter_count':                 #troca o telefone e email do self.usuario
                 re=ldap_usrs[user].modify_my_count(dados)
             if acao == 'esqueci_senha':               # rota para esqueci a senha
-                print('kkkkkkkk88888')
-                print(dados)
                 re=esqueci_senha(dados)
                 
         
@@ -173,9 +172,11 @@ def main():
 
 
     rotas_fechadas(app)
+    print(ipCORS)
 
     @app.route('/login/<chave>')      ## -->  loga na API
     def index(chave):
+        print('kkkkkkkkkkkkkk')
         global seg, api_assinada
         assinar()
         if chave==cript:
