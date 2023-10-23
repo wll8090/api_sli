@@ -62,13 +62,16 @@ class user_ldap:
         data=datetime.now().strftime("%d_%m_%Y")
         hora=datetime.now().strftime("%H:%M")
         with open(f'./login/login_{data}.log','a') as arq:
-            texto=f'''/user: {self.user: <22}/ip: {addr_ip: <18}/as: {hora}\n'''
+            texto=f'''/user: {self.user.lower(): <22}/ip: {addr_ip: <18}/as: {hora}\n'''
             arq.write(texto)
             arq.close()
 
     def connetc(self): 
-        self.conn=Connection(server,self.logon,self.pwd)
-        return self.conn.bind()
+        try:
+            self.conn=Connection(server,self.logon,self.pwd)
+            return self.conn.bind()
+        except:
+            return "offline"
     
     def logout(self):
         self.conn.unbind()

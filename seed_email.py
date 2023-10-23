@@ -47,9 +47,3 @@ def enviar_email(destino,assunto,texto):
     servidor.login(email,pwd)
     a=servidor.sendmail(email, destino, msg.as_string())
     servidor.quit()
-
-
-
-
-
-
