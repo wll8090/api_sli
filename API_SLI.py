@@ -131,7 +131,6 @@ def rotas_fechadas(app):
 
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
-            print(dados)
             if user=='login':
                 re=logon(dados,addr_ip)
             elif acao=='add_user':                      #adiniona novo usuario
@@ -172,7 +171,6 @@ def main():
     app.logger.setLevel(logging.ERROR)
 
     rotas_fechadas(app)
-    print(ipCORS)
 
     @app.route('/login/<chave>')      ## -->  loga na API
     @cross_origin()
@@ -185,7 +183,11 @@ def main():
             return jsonify({'get':cript,'signed':assinado})
         else:
             return jsonify({'get':'None','signed':'None'})
+<<<<<<< HEAD
 
+=======
+ 
+>>>>>>> 1244c37a7d536b941c7a088aa9ec60fcfdff0d63
     if logs:
         @app.route('/log')
         def log():
