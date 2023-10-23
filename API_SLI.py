@@ -37,7 +37,10 @@ def logon(dados,addr_ip):
     user=dados['user']
     pwd=dados['pwd']
     user_l=user_ldap(user,pwd)
-    if user_l.connetc():
+    resposta_login=user_l.connetc()
+    if resposta_login == "offline":
+        return {'resmpose':False,'mensg':'Servidor LDAP offline'} 
+    elif resposta_login:
         ldap_usrs[user]=user_l
         user_l.log_login(addr_ip)
         dd=user_l.my_dados(addr_ip)

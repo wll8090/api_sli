@@ -67,8 +67,11 @@ class user_ldap:
             arq.close()
 
     def connetc(self): 
-        self.conn=Connection(server,self.logon,self.pwd)
-        return self.conn.bind()
+        try:
+            self.conn=Connection(server,self.logon,self.pwd)
+            return self.conn.bind()
+        except:
+            return "offline"
     
     def logout(self):
         self.conn.unbind()
