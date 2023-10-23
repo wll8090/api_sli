@@ -34,7 +34,7 @@ msgerro={'response':'Tokenize error & user login'}
 
 def logon(dados,addr_ip):
     global ldap_usrs
-    user=dados['user']
+    user=dados['user'].lower()
     pwd=dados['pwd']
     user_l=user_ldap(user,pwd)
     resposta_login=user_l.connetc()
@@ -132,7 +132,6 @@ def rotas_fechadas(app):
         
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
-            print(dados)
             if user=='login':
                 re=logon(dados,addr_ip)
             elif acao=='add_user':                      #adiniona novo usuario
@@ -163,8 +162,6 @@ def rotas_fechadas(app):
 
 def main():
     app=Flask(__name__)
-
-    
     #CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
 
     data=datetime.now().strftime('%d_%m_%Y')
@@ -174,9 +171,7 @@ def main():
     app.logger.addHandler(file_handler)
     app.logger.setLevel(logging.ERROR)
 
-
     rotas_fechadas(app)
-    print(ipCORS)
 
     @app.route('/login/<chave>')      ## -->  loga na API
     @cross_origin()
@@ -189,8 +184,7 @@ def main():
             return jsonify({'get':cript,'signed':assinado})
         else:
             return jsonify({'get':'None','signed':'None'})
-    
-        
+ 
     if logs:
         @app.route('/log')
         def log():

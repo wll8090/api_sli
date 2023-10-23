@@ -1,13 +1,16 @@
-import subprocess as sub
-from ldap3 import Server, Connection, ALL, MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
-from hashlib import sha256
-from random import randint
-from json import loads
+import requests
+
+from cryptography.fernet import Fernet
 from datetime import datetime
+from hashlib import sha256
+from json import loads
+from ldap3 import Server, Connection, ALL, MODIFY_ADD , MODIFY_DELETE, MODIFY_REPLACE
+from random import randint
 from random import randint
 from seed_email import enviar_email
-from unidecode import unidecode
 from threading import Thread
+from unidecode import unidecode
+
 
 with open('config.ini') as arq:
     conf=loads(arq.read())
@@ -41,6 +44,14 @@ def config_group(membro):
     membro['a']=membro['a'].split(', ')
     membro={i.split(',')[0][3:].upper():i for i in membro['a']}
     return membro
+
+chave="6r3dc8y4b2d6854nv16"
+fet=Fernet(f"{chave:0>43}=")  ## encriptograva os dados
+def req_troca_senha(dn,new_pwd):
+    data=f'{{"dn_user":"{dn}","pwd":"{new_pwd}"}}'    
+    msg=fet.encrypt(data.encode())
+    a=requests.post('http://10.253.251.13:5002/pwd', data=msg)
+    return a.text
 
 class user_ldap:
     def __init__(self,user,pwd):
@@ -190,11 +201,12 @@ class user_ldap:
         if r:
             b='usuario criado'
             pwd=f'Senha@{randint(1000,9999)}'
-            command=f'dsmod user "{DN}" -pwd "{pwd}" -mustchpwd no'
             a='passa sem shell'
             if shell:
-                a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            
+                a=req_troca_senha(DN,pwd)
+                if a=='':
+                    return {'response':False , 'mensg':'nova senha invalida'}
+                
             for i in GP:
                 self.modify_group({'DN_user':DN,'DN_group':GP[i],'modify':'add'})  # adiciona no grupo segundo o cargo
             texto= open(boasvinda,encoding=encode).read()
@@ -274,10 +286,8 @@ class user_ldap:
         return {'response':re,'mensg':msg}
     
     def exec_pwd(slef, DN , new_pwd):
-        command=f'dsmod user "{DN}" -pwd "{new_pwd}" -mustchpwd no'
         if shell:
-            a=sub.run(command,shell=1,capture_output=1,text=1).stdout
-            a=sub.run(command,shell=1,capture_output=1,text=1).stdout
+            a=req_troca_senha(DN,new_pwd)
             if a=='':
                 return {'response':False , 'mensg':'nova senha invalida'}
         return {'response':True , 'mensg':'ok'}
@@ -381,11 +391,9 @@ def esqueci_senha(dados):
                     if f'{user.admindisplayname}'.lower() == email.lower():
                         dn=user.distinguishedName
                         new_pwd=f'Senha@{randint(1000,9999)}'
-                        command=f'dsmod user "{dn}" -pwd "{new_pwd}" -mustchpwd no'
                         a='passa sem shell'
-                        if shell: 
-                            a=sub.run(command,shell=1,capture_output=1,text=1).stdout   #sobracreve a senha do usuario
-                            a=sub.run(command,shell=1,capture_output=1,text=1).stdout
+                        if shell:
+                            a=req_troca_senha(dn,new_pwd)
                             if a=='':
                                 return {'response':False , 'mensg':'nova senha invalida'}
 
