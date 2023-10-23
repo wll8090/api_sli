@@ -7,6 +7,7 @@ from hashlib import sha256
 from threading import Thread
 from jinja2 import Template
 
+
 import json
 import logging
 
@@ -100,8 +101,6 @@ def rotas_fechadas(app):
     @app.route('/<rota_seg>/<user>/<acao>',methods=['GET','POST'])
     @cross_origin()
     def rotasocultas(rota_seg,user,acao):
-        
-
         addr_ip= request.remote_addr
         if not api_assinada or rota_seg != seg:
             return erro404()
@@ -126,7 +125,7 @@ def rotas_fechadas(app):
                 aa.logout()
                 del(aa)
                 re={'response':True}
-        
+
         elif request.method=='POST':   #todos os POSTS
             dados=json.loads(request.data)
             print(dados)
@@ -134,7 +133,7 @@ def rotas_fechadas(app):
                 re=logon(dados,addr_ip)
             elif acao=='add_user':                      #adiniona novo usuario
                 re=ldap_usrs[user].adduser(dados)
-            elif acao == 'add_group':                   #adiciona novo grupo 
+            elif acao == 'add_group':                   #adiciona novo grupo
                 re=ldap_usrs[user].creat_group(dados)
             elif acao == 'modify_group':                #modifica grupo adicionae remove usuarios
                 re=ldap_usrs[user].modify_group(dados)
@@ -150,8 +149,8 @@ def rotas_fechadas(app):
                 re=ldap_usrs[user].modify_my_count(dados)
             if acao == 'esqueci_senha':               # rota para esqueci a senha
                 re=esqueci_senha(dados)
-                
-        
+
+
         if re=='nada': return erro404()
         return jsonify(re)
 
@@ -160,8 +159,6 @@ def rotas_fechadas(app):
 
 def main():
     app=Flask(__name__)
-
-    
     #CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
 
     data=datetime.now().strftime('%d_%m_%Y')
@@ -170,7 +167,6 @@ def main():
     file_handler.setFormatter(log_formatter)
     app.logger.addHandler(file_handler)
     app.logger.setLevel(logging.ERROR)
-
 
     rotas_fechadas(app)
     print(ipCORS)
@@ -186,8 +182,7 @@ def main():
             return jsonify({'get':cript,'signed':assinado})
         else:
             return jsonify({'get':'None','signed':'None'})
-    
-        
+
     if logs:
         @app.route('/log')
         def log():
@@ -205,16 +200,17 @@ def main():
             return f'''get: {cript} <br>
             assinado: {assinado} <br>
             rota :{seg}
-            <hr> 
+            <hr>
             ldap_users: {all_user}<hr>
             rotas: {app.view_functions} <hr>
             {texte}'''
 
     @app.route('/doc')   ## --> documentação da API
+    @cross_origin()
     def doc():
         doc=Template(open('./templates/doc.html',encoding=encode).read()).render()
         return doc
-    
+
     app.run(host=host,port=port)
 
 ######### app   ----------------------  ######
