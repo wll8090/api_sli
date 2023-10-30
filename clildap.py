@@ -369,10 +369,10 @@ def formatar(texto,nome='',pwd='',codigo='',login='', self=''):
     )
 
 def esqueci_senha(dados):
-    nome=dados['nome']
-    cpf=dados['cpf']
-    nascido=dados['nascido']
-    email=dados['email']
+    nome=dados.get('nome')
+    cpf=dados.get('cpf')
+    nascido=dados.get('nascido')
+    email=dados.get('email')
     root=globals().get('root')
     if not root:
         return {'response':False , 'mensg':'usuario principal não credenciado, aguarde uns minutos'}
