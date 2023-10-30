@@ -50,7 +50,7 @@ fet=Fernet(f"{chave:0>43}=")  ## encriptograva os dados
 def req_troca_senha(dn,new_pwd):
     data=f'{{"dn_user":"{dn}","pwd":"{new_pwd}"}}'    
     msg=fet.encrypt(data.encode())
-    a=requests.post('http://10.253.251.13:5002/pwd', data=msg)
+    a=requests.post(f'http://{host}:5002/pwd', data=msg)
     return a.text
 
 class user_ldap:
@@ -384,6 +384,7 @@ def esqueci_senha(dados):
         attr=['cn','comment','division','admindisplayname','distinguishedName']
         user_root.search(base,filter,attributes=attr)
         lista=user_root.entries
+        print(lista)
         if lista:
             user=lista[0]
             if user.comment == nascido:
@@ -403,11 +404,5 @@ def esqueci_senha(dados):
                             th0.start()
                             return {'response':True, 'mensg':f'verificar {email}'}
                         return {'response':True, 'mensg':f'verificar {email} __test__'}
-                        
-        return {'response':False , 'mensg':'USER não encontrado'}
-            
-            
-            
-        
-    
 
+        return {'response':False , 'mensg':'USER não encontrado'}
