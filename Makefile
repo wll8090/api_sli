@@ -17,11 +17,11 @@ del_image:
 		docker image rm -f $(imagem)
 
 run:
-		docker run -p5001:5001 -d --network $(rede) --name $(api) -v ./:/main/ $(imagem)
+		docker run -d --network $(rede) --name $(api) -v ./:/main/ $(imagem)
 		docker logs $(api)
 
 i-run:
-		docker run -p5001:5001 -it --name $(api) -v ./:/main/ $(imagem) bash
+		docker run -it --name $(api) -v ./:/main/ $(imagem) bash
 
 stop:
 		docker rm -f $(api)

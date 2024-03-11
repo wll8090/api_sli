@@ -146,6 +146,8 @@ class user_ldap:
         desc = dados.get("desc")
         nascido=dados.get('nascido')
         cpf=dados.get('cpf')
+        if not cpf:
+            return {'response':False,'mensg':f'informar dados'}
         if email2.endswith(base_email):
             return {'response':False,'mensg':f'email secundario não pode ser de {base_email}'}
         fn=l_nome[0]
@@ -330,7 +332,7 @@ class user_ldap:
                 return {'response':True, 'mensg':f'verificar {email}'}
             elif token !='teste.15975369874123658' and token != self.codigo :
                 return {'response':False, 'mensg':f'codigo invalido'}
-            attr['mail']=[(MODIFY_REPLACE,[email])]
+            attr['adminDisplayName']=[(MODIFY_REPLACE,[email])]
         self.conn.modify(self.all_dados['DN'],attr)
         if self.conn.result['result']==0:
             del self.codigo
