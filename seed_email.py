@@ -4,12 +4,13 @@ from email.mime.multipart import MIMEMultipart
 from json import loads
 
 
-server='smtp.gmail.com'
+server='10.253.251.37'
 port=587
 
+
 conf=loads(open('config.ini').read())
-email=conf['conf_email']['EMAIL']
-pwd=conf['conf_email']['KEY_APP']
+user=conf['conf_email']['USER']
+pwd=conf['conf_email']['PWD']
 roda_pe=conf['conf_email']['FILE_RODAPE']
 encode=conf.get('conf_email').get('ENCODE')
 
@@ -35,7 +36,7 @@ html='''
 
 def enviar_email(destino,assunto,texto):
     msg=MIMEMultipart()
-    msg['From']=email
+    msg['From']=user
     msg['To']=destino
     msg['Subject']=assunto
 
@@ -43,7 +44,7 @@ def enviar_email(destino,assunto,texto):
 
     msg.attach(MIMEText(texto,'html', _charset=encode))
     servidor=smtplib.SMTP(server,port)
-    servidor.starttls()
-    servidor.login(email,pwd)
-    a=servidor.sendmail(email, destino, msg.as_string())
+    #servidor.starttls()
+    servidor.login(user,pwd)
+    a=servidor.sendmail(user, destino, msg.as_string())
     servidor.quit()
