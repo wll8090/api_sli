@@ -13,6 +13,7 @@ user=conf['conf_email']['USER']
 pwd=conf['conf_email']['PWD']
 roda_pe=conf['conf_email']['FILE_RODAPE']
 encode=conf.get('conf_email').get('ENCODE')
+email_de='NAO-RESPONDA@ufnt.edu.br'
 
 roda_pe=open(roda_pe,encoding=encode).read()
 
@@ -36,7 +37,7 @@ html='''
 
 def enviar_email(destino,assunto,texto):
     msg=MIMEMultipart()
-    msg['From']=user
+    msg['From']=email_de
     msg['To']=destino
     msg['Subject']=assunto
 
@@ -46,5 +47,5 @@ def enviar_email(destino,assunto,texto):
     servidor=smtplib.SMTP(server,port)
     #servidor.starttls()
     servidor.login(user,pwd)
-    a=servidor.sendmail(user, destino, msg.as_string())
+    a=servidor.sendmail(email_de, destino, msg.as_string())
     servidor.quit()

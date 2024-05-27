@@ -330,7 +330,7 @@ class user_ldap:
                 th0=Thread(target=enviar_email, args=(email,'validar email',msg))
                 th0.start()
                 return {'response':True, 'mensg':f'verificar {email}'}
-            elif token !='teste.15975369874123658' and token != self.codigo :
+            elif token !='teste.15975369874123658' and token != self.codigo.strip() :
                 return {'response':False, 'mensg':f'codigo invalido'}
             attr['adminDisplayName']=[(MODIFY_REPLACE,[email])]
         self.conn.modify(self.all_dados['DN'],attr)
@@ -383,14 +383,14 @@ def esqueci_senha(dados):
         return {'response':False , 'mensg':'erro no usuraio root'}
     else:
         filter=f'(&(objectclass=user)(division={cpf}))'
-        attr=['cn','comment','division','admindisplayname','distinguishedName']
+        attr=['displayName','comment','division','admindisplayname','distinguishedName']
         user_root.search(base,filter,attributes=attr)
         lista=user_root.entries
         print(lista)
         if lista:
             user=lista[0]
             if user.comment == nascido:
-                if f'{user.cn}'.lower() == nome.lower():
+                if f'{user.displayName}'.lower() == nome.lower():
                     if f'{user.admindisplayname}'.lower() == email.lower():
                         dn=user.distinguishedName
                         new_pwd=f'Senha@{randint(1000,9999)}'
@@ -408,3 +408,4 @@ def esqueci_senha(dados):
                         return {'response':True, 'mensg':f'verificar {email} __test__'}
 
         return {'response':False , 'mensg':'USER não encontrado'}
+

@@ -17,7 +17,7 @@ del_image:
 		docker image rm -f $(imagem)
 
 run:
-		docker run -d --network $(rede) --name $(api) -v ./:/main/ $(imagem)
+		docker run --network $(rede) --name $(api) -v ./:/main/ $(imagem)
 		docker logs $(api)
 
 i-run:

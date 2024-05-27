@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from clildap import user_ldap , esqueci_senha
 from datetime import datetime
 from flask import Flask ,abort, jsonify, request
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS, cross_origin 
 from hashlib import sha256
 from threading import Thread
 from jinja2 import Template
@@ -56,7 +56,6 @@ def assinar():
     if liberado:
         assina ='25/07-assinado-25/07'
         cript='0f7b8c3893290e18eaec7c09d7d794d13a83b79ab68bc3a5c228650ee87ff85f'
-    
     assinado=sha256((cript+assina).encode('utf8')).hexdigest()
     return cript , assinado
 
@@ -105,15 +104,9 @@ def rotas_fechadas(app):
     @app.route('/<rota_seg>/<user>/<acao>',methods=['GET','POST'])
     @cross_origin()
     def rotasocultas(rota_seg,user,acao):
-
         addr_ip= request.remote_addr
         if not api_assinada or rota_seg != seg:
-            print(api_assinada)
-            print('mmmmmmmmmmmmmmmmmmmmmmmmmm')
             return erro404()
-        print(seg)
-        print(rota_seg)
-        print(api_assinada)
         if user != 'login' and user != 'req_senha':
             tt=request.headers.get('Authorization')
             tokem=dict([tt.split(' ') if tt else ['a','b']])
@@ -168,7 +161,7 @@ def rotas_fechadas(app):
 
 def main():
     app=Flask(__name__)
-    CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
+    #CORS(app,restore={r"/*":{"origins":f"http://{ipCORS}" , "supports_credentials":True ,  "headers": ["Authorization"]}})
 
     data=datetime.now().strftime('%d_%m_%Y')
     log_formatter = logging.Formatter('-'*100+'\n<hr>%(asctime)s - %(levelname)s - %(message)s -')
@@ -182,7 +175,6 @@ def main():
     @app.route('/login/<chave>')      ## -->  loga na API
     @cross_origin()
     def index(chave):
-        print('llllllllllllllllllllllllll')
         global seg, api_assinada
         assinar()
         if chave==cript:
